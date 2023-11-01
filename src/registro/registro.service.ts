@@ -50,7 +50,7 @@ export class RegistroService {
             const entrada = new Date(registro.dataHoraEntrada);
             const saida = registro.dataHoraSaida ? new Date(registro.dataHoraSaida) : new Date();
             const diferenca = (saida.getTime() - entrada.getTime()) / (1000 * 60); // Diferença em minutos
-            totalMinutos += diferenca];
+            totalMinutos += diferenca;
         });
 
         return totalMinutos;
