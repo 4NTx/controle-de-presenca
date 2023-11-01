@@ -20,26 +20,40 @@ export class RegistroService {
         }
 
         const ultimoRegistro = await this.registroRepository.findOne({
-            where: { usuario: usuario, dataHoraSaida: null },
+            where: { usuario: usuario },
             order: { dataHoraEntrada: 'DESC' },
         });
 
-        if (!ultimoRegistro) {
+        const agora = new Date();
+        const hoje = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
+        const dataUltimoRegistro = ultimoRegistro ? new Date(ultimoRegistro.dataHoraEntrada) : null;
+
+        if (!ultimoRegistro || dataUltimoRegistro < hoje) {
             const novoRegistro = this.registroRepository.create({
                 usuario: usuario,
-                dataHoraEntrada: new Date(),
+                dataHoraEntrada: agora,
             });
             await this.registroRepository.save(novoRegistro);
             return 'Entrada registrada com sucesso! 👋';
+        } else if (ultimoRegistro.dataHoraSaida) {
+            const umaHora = 60 * 60 * 1000;  // 1 hora em milissegundos  const umaHora = 60 * 60 * 1000;
+            const diferenca = agora.getTime() - new Date(ultimoRegistro.dataHoraSaida).getTime();
+
+            if (diferenca >= umaHora) {
+                const novoRegistro = this.registroRepository.create({
+                    usuario: usuario,
+                    dataHoraEntrada: agora,
+                });
+                await this.registroRepository.save(novoRegistro);
+                return 'Entrada registrada com sucesso! 👋';
+            } else {
+                return 'Aguarde 1 hora após a última saída para registrar uma nova entrada. ⏰';
+            }
         } else {
-            ultimoRegistro.dataHoraSaida = new Date();
+            ultimoRegistro.dataHoraSaida = agora;
             await this.registroRepository.save(ultimoRegistro);
             return 'Saída registrada com sucesso! 👋';
         }
-    }
-
-    async listarRegistros(): Promise<Registro[]> {
-        return await this.registroRepository.find();
     }
 
     async calcularTempoTotal(usuarioID: number): Promise<number> {
@@ -49,10 +63,25 @@ export class RegistroService {
         registros.forEach(registro => {
             const entrada = new Date(registro.dataHoraEntrada);
             const saida = registro.dataHoraSaida ? new Date(registro.dataHoraSaida) : new Date();
-            const diferenca = (saida.getTime() - entrada.getTime()) / (1000 * 60); // Diferença em minutos
+            const diferenca = (saida.getTime() - entrada.getTime()) / (1000 * 60);
             totalMinutos += diferenca;
         });
 
         return totalMinutos;
     }
+
+    async buscarRegistros(pagina: number, itensPorPagina: number, email?: string): Promise<{ registros: Registro[], total: number }> {
+        const query = this.registroRepository.createQueryBuilder('registro')
+            .leftJoinAndSelect('registro.usuario', 'usuario')
+            .orderBy('registro.dataHoraEntrada', 'DESC')
+            .skip((pagina - 1) * itensPorPagina)
+            .take(itensPorPagina);
+
+        if (email) {
+            query.andWhere('usuario.email = :email', { email });
+        }
+        const [registros, total] = await query.getManyAndCount();
+        return { registros, total };
+    }
 }
+
