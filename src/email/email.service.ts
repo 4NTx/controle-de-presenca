@@ -38,4 +38,19 @@ export class EmailService {
         const conteudo = `<p>Olá ${nome},</p><p>Seja bem-vindo(a) à nossa plataforma. Estamos felizes por ter você conosco.</p>`;
         await this.enviarEmail(email, assunto, conteudo);
     }
+
+
+    async enviarEmailRecuperacaoSenha(email: string, token: string): Promise<void> {
+        const linkRedefinicao = process.env.LINK_REDEFINIR_SENHA + token; //`LINK_REDEFINIR_SENHA${token}`;
+
+        const assunto = 'Recuperação de Senha 🔒';
+        const conteudo = `
+            <p>Olá,</p>
+            <p>Recebemos um pedido para redefinir sua senha. 🔄</p>
+            <p>Por favor, clique no link abaixo para continuar:</p>
+            <a href="${linkRedefinicao}">${linkRedefinicao}</a>
+            <p>Se você não solicitou a redefinição de senha, ignore este e-mail. 🛑</p>
+        `;
+        await this.enviarEmail(email, assunto, conteudo);
+    }
 }

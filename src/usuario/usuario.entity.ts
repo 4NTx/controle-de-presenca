@@ -22,4 +22,10 @@ export class Usuario {
 
     @Column({ default: 'user' })
     cargo: 'user' | 'admin';
+
+    @Column({ nullable: true })
+    tokenRecuperacaoSenha: string;
+
+    @Column({ nullable: true })
+    dataExpiracaoToken: Date;
 }

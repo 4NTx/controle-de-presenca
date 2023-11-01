@@ -1,4 +1,4 @@
-import { Controller, UseGuards, Post, Body, UnauthorizedException } from '@nestjs/common';
+import { Controller, UseGuards, Post, Body, Query, UnauthorizedException, BadRequestException, HttpCode, ConflictException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { Usuario } from '../usuario/usuario.entity';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -53,5 +53,30 @@ export class AuthController {
         await this.usuarioRepository.save(novoUsuario);
         this.emailService.enviarEmailBoasVindas(body.email, body.nome);
         return { message: 'Registro bem-sucedido! 🎉' };
+    }
+
+    @Post('solicitar-recuperacao-senha')
+    @HttpCode(204) // retornando 204 caso dê bom, depois ele cria o token e envia por email pros cara (pra n retornar nada além do código 204)
+    async solicitarRecuperacaoSenha(@Body('email') email: string): Promise<void> {
+        await this.authService.gerarTokenRecuperacaoSenha(email);
+    }
+
+    @Post('redefinir-senha')
+    async redefinirSenha(
+        @Body('email') email: string,
+        @Body('novaSenha') novaSenha: string,
+        @Body('confirmacaoSenha') confirmacaoSenha: string,
+        @Query('token') queryToken: string,
+        //@Body('token') bodyToken: string,
+    ): Promise<{ mensagem: string }> {
+        if (novaSenha !== confirmacaoSenha) {
+            throw new ConflictException('As senhas não coincidem. 🔐');
+        }
+        const token = queryToken; //|| bodyToken;
+        if (!token) {
+            throw new BadRequestException('Token de recuperação de senha não fornecido. 🔑');
+        }
+        await this.authService.redefinirSenha(email, novaSenha, token);
+        return { mensagem: `Senha redefinida com sucesso para o e-mail: ${email}` };
     }
 }
