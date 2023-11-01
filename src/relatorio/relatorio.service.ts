@@ -19,7 +19,7 @@ export class RelatorioService {
     })
     async enviarRelatorioSemanal(): Promise<void> {
         this.logger.log('Iniciando o envio do relatório semanal...');
-        const usuarios = await this.usuarioService.listarUsuarios();
+        const usuarios = await this.usuarioService.listarBolsistas();
         let mensagemRelatorio = 'Relatório Semanal de Presença:\n\n';
 
         for (const usuario of usuarios) {
