@@ -13,16 +13,19 @@ export class RegistroController {
         return await this.registroService.registrarPresenca(cartaoID);
     }
 
-    @Get('listar-registros')
-    @UseGuards(JwtAuthGuard, AdminAuthGuard)
-    async listarRegistros(): Promise<Registro[]> {
-        return this.registroService.listarRegistros();
-    }
-
     @Get('calcular-tempo-total')
     @UseGuards(JwtAuthGuard, AdminAuthGuard)
     async calcularTempoTotal(@Query('usuarioID') usuarioID: number): Promise<{ totalMinutos: number }> {
         const totalMinutos = await this.registroService.calcularTempoTotal(usuarioID);
         return { totalMinutos };
+    }
+
+    @Get('buscar-registros')
+    async buscarRegistros(
+        @Query('pagina') pagina: number = 1, //registro/buscar-registros?pagina=1&itensPorPagina=1&email=EMAIl
+        @Query('itensPorPagina') itensPorPagina: number = 50,
+        @Query('email') email?: string
+    ): Promise<{ registros: Registro[], total: number }> {
+        return await this.registroService.buscarRegistros(pagina, itensPorPagina, email);
     }
 }

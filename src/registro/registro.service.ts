@@ -70,18 +70,32 @@ export class RegistroService {
         return totalMinutos;
     }
 
-    async buscarRegistros(pagina: number, itensPorPagina: number, email?: string): Promise<{ registros: Registro[], total: number }> {
+    private readonly LIMITE_MAX_DE_PAG = 50; // Alterar em Produção
+
+    async buscarRegistros(pagina: number = 1, qntPorPag: number = 10, email?: string): Promise<{ registros: Registro[], total: number, pagina: number, quantidadeMaxPorPag: number, totalDePaginasPossiveis: number }> {
+        if (qntPorPag > this.LIMITE_MAX_DE_PAG) {
+            qntPorPag = this.LIMITE_MAX_DE_PAG;
+        }
         const query = this.registroRepository.createQueryBuilder('registro')
             .leftJoinAndSelect('registro.usuario', 'usuario')
             .orderBy('registro.dataHoraEntrada', 'DESC')
-            .skip((pagina - 1) * itensPorPagina)
-            .take(itensPorPagina);
+            .skip((pagina - 1) * qntPorPag)
+            .take(qntPorPag);
 
         if (email) {
             query.andWhere('usuario.email = :email', { email });
         }
+
         const [registros, total] = await query.getManyAndCount();
-        return { registros, total };
+        const totalDePaginasPossiveis = Math.ceil(total / qntPorPag);
+
+        return {
+            registros,
+            total,
+            pagina,
+            quantidadeMaxPorPag: this.LIMITE_MAX_DE_PAG,
+            totalDePaginasPossiveis
+        };
     }
 }
 
