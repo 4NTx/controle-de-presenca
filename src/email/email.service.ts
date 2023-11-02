@@ -1,5 +1,8 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
+import { Usuario } from 'src/usuario/usuario.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import * as config from 'dotenv';
 config.config();
 
@@ -7,7 +10,10 @@ config.config();
 export class EmailService {
     private transporte;
 
-    constructor() {
+    constructor(
+        @InjectRepository(Usuario)
+        private usuarioRepository: Repository<Usuario>,
+    ) {
         this.transporte = nodemailer.createTransport({
             host: process.env.EMAIL_SMTP,
             port: process.env.EMAIL_PORTA,
@@ -19,7 +25,18 @@ export class EmailService {
         });
     }
 
-    async enviarEmail(para: string, assunto: string, conteudo: string) {
+    async enviarEmail(para: string, assunto: string, conteudoOriginal: string, incluirLinkCancelamento: boolean = true) {
+        const usuario = await this.usuarioRepository.findOne({ where: { email: para } });
+        if (usuario && !usuario.aceitaEmails) {
+            return 'Usuário optou por não receber emails 🚫';
+        }
+
+        let conteudo = conteudoOriginal;
+
+        if (incluirLinkCancelamento) {
+            const linkCancelamento = `${process.env.LINK_CANCELAR_INSCRICAO}${usuario.hashEmail}`;
+            conteudo = `${conteudoOriginal}<br/><br/><a href="${linkCancelamento}">Clique aqui para cancelar a inscrição de e-mails 🚫</a>`;
+        }
         const opcoesDeEmail = {
             from: (process.env.EMAIL_EMAIL),
             to: para,
@@ -33,15 +50,23 @@ export class EmailService {
         }
     }
 
-    async enviarEmailBoasVindas(email: string, nome: string) {
-        const assunto = 'Bem-vindo(a) à nossa plataforma!';
-        const conteudo = `<p>Olá ${nome},</p><p>Seja bem-vindo(a) à nossa plataforma. Estamos felizes por ter você conosco.</p>`;
-        await this.enviarEmail(email, assunto, conteudo);
+
+    async enviarEmailparaReativar(email: string, novoHashEmail: string): Promise<void> {
+        const linkReativacao = process.env.LINK_REATIVAR_EMAIL + novoHashEmail;
+
+        const assunto = 'Reative o Recebimento de E-mails 💌';
+        const conteudo = `
+            <p>Olá,</p>
+            <p>Percebemos que você cancelou o recebimento de nossos e-mails. 😢</p>
+            <p>Se deseja voltar a receber nossas novidades, por favor, clique no link abaixo:</p>
+            <a href="${linkReativacao}">${linkReativacao}</a>
+            <p>Caso não queira reativar, por favor, ignore este e-mail. 🛑</p>
+        `;
+        await this.enviarEmail(email, assunto, conteudo, false);
     }
 
-
-    async enviarEmailRecuperacaoSenha(email: string, token: string): Promise<void> {
-        const linkRedefinicao = process.env.LINK_REDEFINIR_SENHA + token; //`LINK_REDEFINIR_SENHA${token}`;
+    async enviarEmailRecuperacaoSenha(email: string, tokenRecuperacaoSenha: string): Promise<void> {
+        const linkRedefinicao = process.env.LINK_REDEFINIR_SENHA + tokenRecuperacaoSenha; //`LINK_REDEFINIR_SENHA${token}`;
 
         const assunto = 'Recuperação de Senha 🔒';
         const conteudo = `
@@ -51,6 +76,13 @@ export class EmailService {
             <a href="${linkRedefinicao}">${linkRedefinicao}</a>
             <p>Se você não solicitou a redefinição de senha, ignore este e-mail. 🛑</p>
         `;
+        await this.enviarEmail(email, assunto, conteudo, false);
+    }
+
+
+    async enviarEmailBoasVindas(email: string, nome: string) {
+        const assunto = 'Bem-vindo(a) à nossa plataforma!';
+        const conteudo = `<p>Olá ${nome},</p><p>Seja bem-vindo(a) à nossa plataforma. Estamos felizes por ter você conosco.</p>`;
         await this.enviarEmail(email, assunto, conteudo);
     }
 

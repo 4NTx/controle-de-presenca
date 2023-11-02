@@ -27,5 +27,14 @@ export class Usuario {
     tokenRecuperacaoSenha: string;
 
     @Column({ nullable: true })
-    dataExpiracaoToken: Date;
+    dataExpiracaoTokenRecuperacao: Date;
+
+    @Column({ type: 'boolean', default: true })
+    aceitaEmails: boolean;
+
+    @Column({ type: 'varchar', nullable: true, unique: true })
+    hashEmail: string;
+
+    @Column({ type: 'varchar', nullable: true, unique: true })
+    novoHashEmail: string;
 }

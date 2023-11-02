@@ -15,6 +15,24 @@ export class AuthService {
         private emailService: EmailService,
     ) { }
 
+    async registrarUsuario(dadosUsuario: { email: string, senha: string, nome: string, cartaoID: string, whats: string }): Promise<Usuario> {
+        const hashedSenha = await bcrypt.hash(dadosUsuario.senha, 12);
+        const hashEmail = uuidv4();
+        const novoHashEmail = uuidv4();
+        const novoUsuario = this.usuarioRepository.create({
+            nome: dadosUsuario.nome,
+            email: dadosUsuario.email,
+            whats: dadosUsuario.whats,
+            senha: hashedSenha,
+            cartaoID: dadosUsuario.cartaoID,
+            cargo: 'user',
+            hashEmail: hashEmail,
+            novoHashEmail: novoHashEmail,
+        });
+        await this.usuarioRepository.save(novoUsuario);
+        return novoUsuario;
+    }
+
     async validarSenhaUsuario(email: string, senha: string): Promise<any> {
         const usuario = await this.usuarioRepository.findOne({ where: { email } });
         if (usuario && senha && await bcrypt.compare(senha, usuario.senha)) {
@@ -50,7 +68,7 @@ export class AuthService {
         usuario.tokenRecuperacaoSenha = token;
         const dataExpiracao = new Date();
         dataExpiracao.setHours(dataExpiracao.getHours() + 1);
-        usuario.dataExpiracaoToken = dataExpiracao;
+        usuario.dataExpiracaoTokenRecuperacao = dataExpiracao;
         await this.usuarioRepository.save(usuario);
         await this.emailService.enviarEmailRecuperacaoSenha(email, token);
     }
@@ -58,7 +76,7 @@ export class AuthService {
 
     async validarTokenRecuperacaoSenha(email: string, token: string): Promise<boolean> {
         const usuario = await this.usuarioRepository.findOne({ where: { tokenRecuperacaoSenha: token } });
-        if (!usuario || !usuario.dataExpiracaoToken || new Date() > usuario.dataExpiracaoToken) {
+        if (!usuario || !usuario.dataExpiracaoTokenRecuperacao || new Date() > usuario.dataExpiracaoTokenRecuperacao) {
             throw new NotFoundException('Token inválido ou expirado. 🕰️');
         }
         if (usuario.email !== email) {
@@ -74,7 +92,7 @@ export class AuthService {
 
         usuario.senha = await bcrypt.hash(novaSenha, 12);
         usuario.tokenRecuperacaoSenha = null;
-        usuario.dataExpiracaoToken = null;
+        usuario.dataExpiracaoTokenRecuperacao = null;
 
         await this.usuarioRepository.save(usuario);
     }

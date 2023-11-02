@@ -7,6 +7,7 @@ import * as bcrypt from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
 import { AdminAuthGuard } from 'src/guards/admin-auth.guard';
 import { EmailService } from 'src/email/email.service';
+import { v4 as uuidv4 } from 'uuid';
 
 @Controller('autenticacao')
 export class AuthController {
@@ -36,21 +37,11 @@ export class AuthController {
         return { message: 'Login bem-sucedido! 🎉', token };
     }
 
-
     @UseGuards(AdminAuthGuard)
     @Post('registro')
     async registrar(@Body() body: { email: string, senha: string, nome: string, cartaoID: string, whats: string }) {
         await this.authService.verificarUsuarioOuCartaoExistente(body.email, body.cartaoID);
-        const hashedSenha = await bcrypt.hash(body.senha, 12);
-        const novoUsuario = this.usuarioRepository.create({
-            nome: body.nome,
-            email: body.email,
-            whats: body.whats,
-            senha: hashedSenha,
-            cartaoID: body.cartaoID,
-            cargo: 'user',
-        });
-        await this.usuarioRepository.save(novoUsuario);
+        const novoUsuario = await this.authService.registrarUsuario(body);
         this.emailService.enviarEmailBoasVindas(body.email, body.nome);
         return { message: 'Registro bem-sucedido! 🎉' };
     }
@@ -66,13 +57,13 @@ export class AuthController {
         @Body('email') email: string,
         @Body('novaSenha') novaSenha: string,
         @Body('confirmacaoSenha') confirmacaoSenha: string,
-        @Query('token') queryToken: string,
+        @Query('tokenRecuperacaoSenha') queryTokenRecuperacaoSenha: string,
         //@Body('token') bodyToken: string,
     ): Promise<{ mensagem: string }> {
         if (novaSenha !== confirmacaoSenha) {
             throw new ConflictException('As senhas não coincidem. 🔐');
         }
-        const token = queryToken; //|| bodyToken;
+        const token = queryTokenRecuperacaoSenha; //|| bodyToken;
         if (!token) {
             throw new BadRequestException('Token de recuperação de senha não fornecido. 🔑');
         }
