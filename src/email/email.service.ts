@@ -1,12 +1,8 @@
 import { Injectable, InternalServerErrorException, forwardRef, Inject } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
-import { InjectRepository, TypeOrmModule } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { UsuarioService } from 'src/usuario/usuario.service';
-import { Usuario } from 'src/usuario/usuario.entity';
 import { v4 as uuidv4 } from 'uuid';
 import * as config from 'dotenv';
-import { AuthService } from 'src/auth/auth.service';
 
 config.config();
 
@@ -15,7 +11,7 @@ export class EmailService {
     private transporte;
 
     constructor(
-        @Inject(forwardRef(() => UsuarioService))  // Corrigido aqui
+        @Inject(forwardRef(() => UsuarioService))
         private usuarioService: UsuarioService
     ) {
         this.transporte = nodemailer.createTransport({
@@ -32,14 +28,18 @@ export class EmailService {
     async enviarEmail(para: string, assunto: string, conteudoOriginal: string, incluirLinkCancelamento: boolean = true) {
         const usuario = await this.usuarioService.procurarUsuarioPorEmail(para);
         if (usuario && !usuario.aceitaEmails) {
-            return 'Usuário optou por não receber emails 🚫';
+            return 'Usuário optou por não receber emails';
         }
-
         let conteudo = conteudoOriginal;
-
         if (incluirLinkCancelamento) {
             const linkCancelamento = `${process.env.LINK_CANCELAR_INSCRICAO}${usuario.hashEmail}`;
-            conteudo = `${conteudoOriginal}<br/><br/><a href="${linkCancelamento}">Clique aqui para cancelar a inscrição de e-mails 🚫</a>`;
+            const rodapeEmail = `
+            <div style="margin-top: 20px; padding: 10px; background-color: #f8f9fa; border-radius: 4px; text-align: center;">
+                <p style="margin: 0; font-size: 12px;">Deseja parar de receber nossos e-mails?</p>
+                <a href="${linkCancelamento}" style="font-size: 12px; color: #007bff; text-decoration: none;">Clique aqui para cancelar a inscrição</a>
+            </div>
+        `;
+            conteudo = `${conteudoOriginal}${rodapeEmail}`;
         }
         const opcoesDeEmail = {
             from: (process.env.EMAIL_EMAIL),
@@ -50,21 +50,26 @@ export class EmailService {
         try {
             const resultado = await this.transporte.sendMail(opcoesDeEmail);
         } catch (error) {
-            throw new InternalServerErrorException(`[🚫] Falha ao enviar o e-mail. Erro: ${error.message}`);
+            throw new InternalServerErrorException(`Falha ao enviar o e-mail. Erro: ${error.message}`);
         }
     }
 
     async enviarEmailparaReativar(email: string, novoHashEmail: string): Promise<void> {
         const linkReativacao = process.env.LINK_REATIVAR_EMAIL + novoHashEmail;
 
-        const assunto = 'Reative o Recebimento de E-mails 💌';
+        const assunto = '[REXLAB] 💌Reative o Recebimento de E-mails';
         const conteudo = `
-            <p>Olá,</p>
-            <p>Percebemos que você cancelou o recebimento de nossos e-mails. 😢</p>
-            <p>Se deseja voltar a receber nossas novidades, por favor, clique no link abaixo:</p>
-            <a href="${linkReativacao}">${linkReativacao}</a>
-            <p>Caso não queira reativar, por favor, ignore este e-mail. 🛑</p>
-        `;
+        <div style="background-color: #f8f9fa; padding: 20px; font-family: Arial, sans-serif;">
+            <div style="max-width: 600px; margin: auto; background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.15);">
+                <h2 style="color: #007bff;">Reative o Recebimento de E-mails 💌</h2>
+                <p>Olá,</p>
+                <p>Percebemos que você cancelou o recebimento de nossos e-mails. 😢</p>
+                <p>Se deseja voltar a receber nossas novidades, por favor, clique no botão abaixo:</p>
+                <a href="${linkReativacao}" style="display: inline-block; padding: 10px 20px; color: #ffffff; background-color: #007bff; border-radius: 4px; text-decoration: none;">Reativar E-mails</a>
+                <p style="margin-top: 20px;">Caso não queira reativar, por favor, ignore este e-mail. 🛑</p>
+            </div>
+        </div>
+    `;
         await this.enviarEmail(email, assunto, conteudo, false);
 
         const atualizacoes = {
@@ -75,23 +80,36 @@ export class EmailService {
     }
 
     async enviarEmailRecuperacaoSenha(email: string, tokenRecuperacaoSenha: string): Promise<void> {
-        const linkRedefinicao = process.env.LINK_REDEFINIR_SENHA + tokenRecuperacaoSenha; //`LINK_REDEFINIR_SENHA${token}`;
+        const linkRedefinicao = process.env.LINK_REDEFINIR_SENHA + tokenRecuperacaoSenha;
 
-        const assunto = 'Recuperação de Senha 🔒';
+        const assunto = '[REXLAB] 🔒Recuperação de Senha';
         const conteudo = `
-            <p>Olá,</p>
-            <p>Recebemos um pedido para redefinir sua senha. 🔄</p>
-            <p>Por favor, clique no link abaixo para continuar:</p>
-            <a href="${linkRedefinicao}">${linkRedefinicao}</a>
-            <p>Se você não solicitou a redefinição de senha, ignore este e-mail. 🛑</p>
-        `;
+        <div style="background-color: #f8f9fa; padding: 20px; font-family: Arial, sans-serif;">
+            <div style="max-width: 600px; margin: auto; text-align:center; background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.15);">
+                <h2 style="color: #007bff;">Recuperação de Senha</h2>
+                <p>Olá, Bolsista</p>
+                <p>Recebemos um pedido para redefinir sua senha.</p>
+                <p>Por favor, clique no botão abaixo para continuar:</p>
+                <a href="${linkRedefinicao}" style="display: inline-block; padding: 10px 20px; color: #ffffff; background-color: #007bff; border-radius: 4px; text-decoration: none;">Redefinir Senha</a>
+                <p style="margin-top: 20px;">Se você não solicitou a redefinição de senha, ignore este e-mail. 🛑</p>
+            </div>
+        </div>
+    `;
         await this.enviarEmail(email, assunto, conteudo, false);
     }
 
 
     async enviarEmailBoasVindas(email: string, nome: string) {
-        const assunto = 'Bem-vindo(a) à nossa plataforma!';
-        const conteudo = `<p>Olá ${nome},</p><p>Seja bem-vindo(a) à nossa plataforma. Estamos felizes por ter você conosco.</p>`;
+        const assunto = '[REXLAB] 🤝Bem-vindo(a) à nossa plataforma!';
+        const conteudo = `
+    <div style="background-color: #f8f9fa; padding: 20px; font-family: Arial, sans-serif;">
+        <div style="max-width: 600px; margin: auto; text-align:center;background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.15);">
+            <h2 style="color: #007bff;">Bem-vindo(a), ${nome}!</h2>
+            <p>Seja bem-vindo(a) à nossa plataforma. Estamos felizes por ter você conosco.</p>
+            <p>Explore, aprenda e nos ajude a melhorar!</p>
+        </div>
+    </div>
+`;
         await this.enviarEmail(email, assunto, conteudo);
     }
 
@@ -117,4 +135,13 @@ export class EmailService {
 
         await this.enviarEmail(adminEmail, assunto, conteudo);
     }
+
+
+    //    let conteudo = `
+    //    <div style="background-color: #f8f9fa; padding: 20px; font-family: Arial, sans-serif;">
+    //        <div style="max-width: 600px; margin: auto; background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.15);">
+    //            <h2 style="color: #007bff;">Relatório Semanal de Presença 📊</h2>
+    //            <p>Relatório Semanal de Presença:</p>
+    //            <ul style="list-style-type: none; padding: 0;">
+    //`;
 }
