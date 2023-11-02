@@ -14,11 +14,18 @@ export class RegistroController {
     }
 
     @Get('calcular-tempo-total')
-    @UseGuards(JwtAuthGuard, AdminAuthGuard)
-    async calcularTempoTotal(@Query('usuarioID') usuarioID: number): Promise<{ totalMinutos: number }> {
-        const totalMinutos = await this.registroService.calcularTempoTotal(usuarioID);
-        return { totalMinutos };
+    async calcularTempoTotal(
+        @Query('usuarioID') usuarioID: number = 0,
+        @Query('periodo') periodo: string = 'day',
+        @Query('dataInicio') dataInicio?: string,
+        @Query('dataFim') dataFim?: string
+    ): Promise<{ usuario: string, email: string, rfid: string, totalMinutos: number, totalHoras: number }> {
+        return await this.registroService.calcularTempoTotal(usuarioID, periodo, dataInicio, dataFim);
     }
+    //GET /registro/calcular-tempo-total?usuarioID=1&periodo=week
+    //GET /registro/calcular-tempo-total?usuarioID=1&dataInicio=2023-01-01&dataFim=2023-01-31
+    //GET /registro/calcular-tempo-total?usuarioID=1&periodo=week&dataInicio=2023-01-01&dataFim=2023-01-31
+
 
     @Get('buscar-registros')
     async buscarRegistros(
@@ -28,4 +35,5 @@ export class RegistroController {
     ): Promise<{ registros: Registro[], total: number }> {
         return await this.registroService.buscarRegistros(pagina, itensPorPagina, email);
     }
+
 }

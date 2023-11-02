@@ -1,8 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Between } from 'typeorm';
 import { Registro } from './registro.entity';
 import { Usuario } from '../usuario/usuario.entity';
+import * as moment from 'moment';
+moment.locale('pt-br');
 
 @Injectable()
 export class RegistroService {
@@ -56,10 +58,33 @@ export class RegistroService {
         }
     }
 
-    async calcularTempoTotal(usuarioID: number): Promise<number> {
-        const registros = await this.registroRepository.find({ where: { usuario: { usuarioID } } });
-        let totalMinutos = 0;
+    async calcularTempoTotal(usuarioID: number, periodo: string, dataInicio?: string, dataFim?: string): Promise<{ usuario: string, email: string, rfid: string, totalMinutos: number, totalHoras: number }> {
+        const usuario = await this.usuarioRepository.findOne({ where: { usuarioID } });
+        if (!usuario) {
+            throw new NotFoundException('Usuário não encontrado');
+        }
 
+        const periodosValidos: Array<moment.unitOfTime.StartOf> = ['day', 'week', 'month', 'quarter', 'year'];
+        if (!periodosValidos.includes(periodo as moment.unitOfTime.StartOf)) {
+            throw new BadRequestException('Período inválido\nPeríodos válidos: day, week, month, quarter, year');
+        }
+
+        let inicioPeriodo = moment().startOf(periodo as moment.unitOfTime.StartOf);
+        let fimPeriodo = moment().endOf(periodo as moment.unitOfTime.StartOf);
+
+        if (dataInicio && dataFim) {
+            inicioPeriodo = moment(dataInicio);
+            fimPeriodo = moment(dataFim);
+        }
+
+        const registros = await this.registroRepository.find({
+            where: {
+                usuario: { usuarioID },
+                dataHoraEntrada: Between(inicioPeriodo.toDate(), fimPeriodo.toDate())
+            }
+        });
+
+        let totalMinutos = 0;
         registros.forEach(registro => {
             const entrada = new Date(registro.dataHoraEntrada);
             const saida = registro.dataHoraSaida ? new Date(registro.dataHoraSaida) : new Date();
@@ -67,11 +92,18 @@ export class RegistroService {
             totalMinutos += diferenca;
         });
 
-        return totalMinutos;
+        const totalHoras = totalMinutos / 60;
+
+        return {
+            usuario: usuario.nome,
+            email: usuario.email,
+            rfid: usuario.cartaoID,
+            totalMinutos,
+            totalHoras
+        };
     }
 
-    private readonly LIMITE_MAX_DE_PAG = 50; // Alterar em Produção
-
+    private readonly LIMITE_MAX_DE_PAG = 50;
     async buscarRegistros(pagina: number = 1, qntPorPag: number = 10, email?: string): Promise<{ registros: Registro[], total: number, pagina: number, quantidadeMaxPorPag: number, totalDePaginasPossiveis: number }> {
         if (qntPorPag > this.LIMITE_MAX_DE_PAG) {
             qntPorPag = this.LIMITE_MAX_DE_PAG;

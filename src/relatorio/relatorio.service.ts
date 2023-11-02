@@ -23,9 +23,11 @@ export class RelatorioService {
         let mensagemRelatorio = 'Relatório Semanal de Presença:\n\n';
 
         for (const usuario of usuarios) {
-            const totalMinutos = await this.registroService.calcularTempoTotal(usuario.usuarioID);
-            const horas = Math.floor(totalMinutos / 60);
-            const minutos = totalMinutos % 60;
+            const periodo = 'day';
+            const { totalMinutos } = await this.registroService.calcularTempoTotal(usuario.usuarioID, periodo);
+
+            const horas = Math.floor(Number(totalMinutos) / 60);
+            const minutos = Number(totalMinutos) % 60;
 
             mensagemRelatorio += `${usuario.nome}: ${horas} horas e ${minutos} minutos\n`;
         }
