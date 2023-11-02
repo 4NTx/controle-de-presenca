@@ -1,7 +1,7 @@
 import { Controller, Body, Post, Req, Get, UseGuards } from '@nestjs/common';
 import { MetaService } from './meta.service';
 import { Meta } from './meta.entity';
-import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
+import { JwtAuthGuard } from 'src/jwt/jwt-auth.guard';
 import { AdminAuthGuard } from 'src/guards/admin-auth.guard';
 import { Request } from 'express';
 import { UsuarioService } from '../usuario/usuario.service';

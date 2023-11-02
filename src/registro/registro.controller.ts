@@ -1,7 +1,7 @@
 import { Controller, Get, UseGuards, Post, Body, Query } from '@nestjs/common';
 import { RegistroService } from './registro.service';
 import { AdminAuthGuard } from 'src/guards/admin-auth.guard';
-import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
+import { JwtAuthGuard } from 'src/jwt/jwt-auth.guard';
 import { Registro } from './registro.entity';
 
 @Controller('registro')

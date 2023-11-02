@@ -2,7 +2,7 @@ import { Controller, Get, Param, UseGuards, NotFoundException } from '@nestjs/co
 import { UsuarioService } from './usuario.service';
 import { Usuario } from './usuario.entity';
 import { AdminAuthGuard } from 'src/guards/admin-auth.guard';
-import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
+import { JwtAuthGuard } from 'src/jwt/jwt-auth.guard';
 
 @Controller('usuario')
 export class UsuarioController {
