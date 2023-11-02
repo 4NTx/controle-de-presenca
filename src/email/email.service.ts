@@ -1,9 +1,12 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
-import { Usuario } from 'src/usuario/usuario.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { UsuarioService } from 'src/usuario/usuario.service';
+import { Usuario } from 'src/usuario/usuario.entity';
+import { v4 as uuidv4 } from 'uuid';
 import * as config from 'dotenv';
+
 config.config();
 
 @Injectable()
@@ -13,6 +16,7 @@ export class EmailService {
     constructor(
         @InjectRepository(Usuario)
         private usuarioRepository: Repository<Usuario>,
+        private usuarioService: UsuarioService,
     ) {
         this.transporte = nodemailer.createTransport({
             host: process.env.EMAIL_SMTP,
@@ -50,7 +54,6 @@ export class EmailService {
         }
     }
 
-
     async enviarEmailparaReativar(email: string, novoHashEmail: string): Promise<void> {
         const linkReativacao = process.env.LINK_REATIVAR_EMAIL + novoHashEmail;
 
@@ -63,6 +66,12 @@ export class EmailService {
             <p>Caso não queira reativar, por favor, ignore este e-mail. 🛑</p>
         `;
         await this.enviarEmail(email, assunto, conteudo, false);
+
+        const atualizacoes = {
+            novoHashEmail: null, // Invalida o novoHashEmail atual
+            hashEmail: uuidv4(), // Usar uuidv4 para gerar um novo hashEmail
+        };
+        await this.usuarioService.buscarEAtualizarUsuario(email, atualizacoes);
     }
 
     async enviarEmailRecuperacaoSenha(email: string, tokenRecuperacaoSenha: string): Promise<void> {

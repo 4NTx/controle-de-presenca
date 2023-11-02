@@ -7,7 +7,6 @@ import * as bcrypt from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
 import { AdminAuthGuard } from 'src/guards/admin-auth.guard';
 import { EmailService } from 'src/email/email.service';
-import { v4 as uuidv4 } from 'uuid';
 
 @Controller('autenticacao')
 export class AuthController {
