@@ -25,9 +25,9 @@ export class EmailService {
         });
     }
 
-    async enviarEmail(para: string, assunto: string, conteudoOriginal: string, incluirLinkCancelamento: boolean = true) {
+    async enviarEmail(para: string, assunto: string, conteudoOriginal: string, incluirLinkCancelamento: boolean = true, forcarEnvio: boolean = false) {
         const usuario = await this.usuarioService.procurarUsuarioPorEmail(para);
-        if (usuario && !usuario.aceitaEmails) {
+        if (usuario && !usuario.aceitaEmails && !forcarEnvio) {
             return 'Usuário optou por não receber emails';
         }
         let conteudo = conteudoOriginal;
@@ -56,11 +56,10 @@ export class EmailService {
 
     async enviarEmailparaReativar(email: string, novoHashEmail: string): Promise<void> {
         const linkReativacao = process.env.LINK_REATIVAR_EMAIL + novoHashEmail;
-
         const assunto = '[REXLAB] 💌Reative o Recebimento de E-mails';
         const conteudo = `
         <div style="background-color: #f8f9fa; padding: 20px; font-family: Arial, sans-serif;">
-            <div style="max-width: 600px; margin: auto; background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.15);">
+            <div style="max-width: 600px; margin: auto; text-align:center; background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.15);">
                 <h2 style="color: #007bff;">Reative o Recebimento de E-mails 💌</h2>
                 <p>Olá,</p>
                 <p>Percebemos que você cancelou o recebimento de nossos e-mails. 😢</p>
@@ -70,11 +69,9 @@ export class EmailService {
             </div>
         </div>
     `;
-        await this.enviarEmail(email, assunto, conteudo, false);
-
+        await this.enviarEmail(email, assunto, conteudo, false, true);
         const atualizacoes = {
-            novoHashEmail: null,
-            hashEmail: uuidv4(),
+            novoHashEmail: novoHashEmail
         };
         await this.usuarioService.buscarEAtualizarUsuario(email, atualizacoes);
     }
@@ -95,7 +92,7 @@ export class EmailService {
             </div>
         </div>
     `;
-        await this.enviarEmail(email, assunto, conteudo, false);
+        await this.enviarEmail(email, assunto, conteudo, false, true);
     }
 
 

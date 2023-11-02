@@ -17,20 +17,20 @@ export class UsuarioController {
     @Get('cancelar-inscricao/:hashEmail')
     async cancelarInscricao(@Param('hashEmail') hashEmail: string) {
         const result = await this.usuarioService.cancelarRecebimentoEmail(hashEmail);
-        if (result === 'Recebimento de emails cancelado com sucesso 🚫') {
+        if (result === 'Recebimento de emails cancelado com sucesso') {
             return 'Sua inscrição para receber e-mails foi cancelada com sucesso.';
         } else {
-            throw new NotFoundException('Usuário não encontrado 🤷‍♂️');
+            throw new NotFoundException('Usuário não encontrado ou hash incorreto');
         }
     }
 
     @Get('reativar-inscricao/:novoHashEmail')
     async reativarInscricao(@Param('novoHashEmail') novoHashEmail: string) {
         const result = await this.usuarioService.reativarRecebimentoEmail(novoHashEmail);
-        if (result === 'Recebimento de emails reativado com sucesso ✅') {
+        if (result === 'Recebimento de emails reativado com sucesso') {
             return 'Sua inscrição para receber e-mails foi reativada com sucesso.';
         } else {
-            throw new NotFoundException('Usuário não encontrado 🤷‍♂️');
+            throw new NotFoundException('Usuário não encontrado');
         }
     }
 }

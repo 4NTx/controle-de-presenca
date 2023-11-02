@@ -22,24 +22,26 @@ export class UsuarioService {
     async cancelarRecebimentoEmail(hashEmail: string): Promise<string> {
         const usuario = await this.usuarioRepository.findOne({ where: { hashEmail } });
         if (!usuario) {
-            return 'Usuário não encontrado 🤷‍♂️';
+            return 'Usuário não encontrado';
         }
         usuario.aceitaEmails = false;
-        usuario.hashEmail = null; // Invalida o hashEmail atual
-        usuario.novoHashEmail = uuidv4(); // Usar uuidv4 para gerar um novo hashEmail
+        usuario.novoHashEmail = uuidv4();
+        usuario.hashEmail = null;
         await this.usuarioRepository.save(usuario);
         await this.emailService.enviarEmailparaReativar(usuario.email, usuario.novoHashEmail);
-        return 'Recebimento de emails cancelado com sucesso 🚫';
+        return 'Recebimento de emails cancelado com sucesso';
     }
 
     async reativarRecebimentoEmail(novoHashEmail: string): Promise<string> {
         const usuario = await this.usuarioRepository.findOne({ where: { novoHashEmail } });
         if (!usuario) {
-            return 'Usuário não encontrado 🤷‍♂️';
+            return 'Usuário não encontrado';
         }
         usuario.aceitaEmails = true;
+        usuario.hashEmail = uuidv4();
+        usuario.novoHashEmail = null;
         await this.usuarioRepository.save(usuario);
-        return 'Recebimento de emails reativado com sucesso ✅';
+        return 'Recebimento de emails reativado com sucesso';
     }
 
     async buscarUsuarioPorID(usuarioID: number): Promise<Usuario> {
