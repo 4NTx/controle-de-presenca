@@ -4,9 +4,11 @@ import { AuthController } from './auth.controller';
 import { Usuario } from '../usuario/usuario.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
-import { JwtStrategy } from 'src/jwt/jwt.strategy';
+import { JwtStrategy } from '../jwt/jwt.strategy';
 import { PassportModule } from '@nestjs/passport';
+import { EmailModule } from '../email/email.module';
 import * as config from 'dotenv';
+import { UsuarioModule } from 'src/usuario/usuarios.module';
 import { EmailService } from 'src/email/email.service';
 config.config();
 
@@ -14,6 +16,8 @@ config.config();
     imports: [
         TypeOrmModule.forFeature([Usuario]),
         PassportModule,
+        EmailModule,
+        UsuarioModule,
         JwtModule.register({
             secret: process.env.JWT_SECRET,
             signOptions: { expiresIn: '7d' },

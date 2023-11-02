@@ -1,5 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import { Injectable, NotFoundException, forwardRef, Inject } from '@nestjs/common';
+import { InjectRepository, TypeOrmModule } from '@nestjs/typeorm';
 import { Usuario } from './usuario.entity';
 import { Repository } from 'typeorm';
 import { EmailService } from 'src/email/email.service';
@@ -11,8 +11,8 @@ export class UsuarioService {
     constructor(
         @InjectRepository(Usuario)
         private usuarioRepository: Repository<Usuario>,
+        @Inject(forwardRef(() => EmailService))
         private emailService: EmailService,
-        private authService: AuthService,
     ) { }
 
     async listarBolsistas(): Promise<Usuario[]> {
@@ -54,5 +54,9 @@ export class UsuarioService {
         Object.assign(usuario, atualizacoes);
         await this.usuarioRepository.save(usuario);
         return usuario;
+    }
+
+    async procurarUsuarioPorEmail(email: string) {
+        return this.usuarioRepository.findOne({ where: { email } });
     }
 }

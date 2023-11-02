@@ -13,9 +13,7 @@ export class AuthController {
     constructor(
         private authService: AuthService,
         private jwtService: JwtService,
-        @InjectRepository(Usuario)
-        private usuarioRepository: Repository<Usuario>,
-        private emailService: EmailService,
+        private emailService: EmailService
     ) { }
 
     @Post('login')

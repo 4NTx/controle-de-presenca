@@ -1,11 +1,12 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, forwardRef, Inject } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
-import { InjectRepository } from '@nestjs/typeorm';
+import { InjectRepository, TypeOrmModule } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UsuarioService } from 'src/usuario/usuario.service';
 import { Usuario } from 'src/usuario/usuario.entity';
 import { v4 as uuidv4 } from 'uuid';
 import * as config from 'dotenv';
+import { AuthService } from 'src/auth/auth.service';
 
 config.config();
 
@@ -14,9 +15,8 @@ export class EmailService {
     private transporte;
 
     constructor(
-        @InjectRepository(Usuario)
-        private usuarioRepository: Repository<Usuario>,
-        private usuarioService: UsuarioService,
+        @Inject(forwardRef(() => UsuarioService))  // Corrigido aqui
+        private usuarioService: UsuarioService
     ) {
         this.transporte = nodemailer.createTransport({
             host: process.env.EMAIL_SMTP,
@@ -30,7 +30,7 @@ export class EmailService {
     }
 
     async enviarEmail(para: string, assunto: string, conteudoOriginal: string, incluirLinkCancelamento: boolean = true) {
-        const usuario = await this.usuarioRepository.findOne({ where: { email: para } });
+        const usuario = await this.usuarioService.procurarUsuarioPorEmail(para);
         if (usuario && !usuario.aceitaEmails) {
             return 'Usuário optou por não receber emails 🚫';
         }
@@ -68,8 +68,8 @@ export class EmailService {
         await this.enviarEmail(email, assunto, conteudo, false);
 
         const atualizacoes = {
-            novoHashEmail: null, // Invalida o novoHashEmail atual
-            hashEmail: uuidv4(), // Usar uuidv4 para gerar um novo hashEmail
+            novoHashEmail: null,
+            hashEmail: uuidv4(),
         };
         await this.usuarioService.buscarEAtualizarUsuario(email, atualizacoes);
     }
