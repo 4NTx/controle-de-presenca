@@ -53,4 +53,27 @@ export class EmailService {
         `;
         await this.enviarEmail(email, assunto, conteudo);
     }
+
+    async enviarRelatorioSemanal(adminEmail: string, usuarios: any[]) {
+        const assunto = 'Relatório Semanal de Presença 📊';
+        let conteudo = '<p>Relatório Semanal de Presença:</p><ul>';
+
+        for (const usuario of usuarios) {
+            const horas = Math.floor(Number(usuario.totalMinutos) / 60);
+            const minutos = Math.round(Number(usuario.totalMinutos) % 60);
+            const ultimaEntrada = usuario.ultimaEntrada ? new Date(usuario.ultimaEntrada).toLocaleString() : 'N/A';
+            const ultimaSaida = usuario.ultimaSaida ? new Date(usuario.ultimaSaida).toLocaleString() : 'N/A';
+
+            conteudo += `<li>
+                            <strong>${usuario.usuario}</strong> (${usuario.email}):<br>
+                            - Tempo total: ${horas} horas e ${minutos} minutos<br>
+                            - Última entrada: ${ultimaEntrada}<br>
+                            - Última saída: ${ultimaSaida}
+                         </li>`;
+        }
+
+        conteudo += '</ul><p>Atenciosamente,</p><p>Equipe</p>';
+
+        await this.enviarEmail(adminEmail, assunto, conteudo);
+    }
 }

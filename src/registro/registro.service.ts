@@ -58,7 +58,7 @@ export class RegistroService {
         }
     }
 
-    async calcularTempoTotal(usuarioID: number, periodo: string, dataInicio?: string, dataFim?: string): Promise<{ usuario: string, email: string, rfid: string, totalMinutos: number, totalHoras: number }> {
+    async calcularTempoTotal(usuarioID: number, periodo: string, dataInicio?: string, dataFim?: string): Promise<{ usuario: string, email: string, rfid: string, totalMinutos: number, totalHoras: number, ultimaEntrada: Date, ultimaSaida: Date }> {
         const usuario = await this.usuarioRepository.findOne({ where: { usuarioID } });
         if (!usuario) {
             throw new NotFoundException('Usuário não encontrado');
@@ -94,12 +94,17 @@ export class RegistroService {
 
         const totalHoras = totalMinutos / 60;
 
+        const ultimaEntrada = registros.length > 0 ? registros[0].dataHoraEntrada : null;
+        const ultimaSaida = registros.length > 0 ? registros[0].dataHoraSaida : null;
+
         return {
             usuario: usuario.nome,
             email: usuario.email,
             rfid: usuario.cartaoID,
             totalMinutos,
-            totalHoras
+            totalHoras,
+            ultimaEntrada,
+            ultimaSaida
         };
     }
 

@@ -25,4 +25,7 @@ export class Meta {
 
     @Column()
     dataAtualizacao: Date;
+
+    @Column({ nullable: true })
+    cumpriu?: boolean;
 }

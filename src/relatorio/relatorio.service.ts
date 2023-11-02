@@ -20,22 +20,19 @@ export class RelatorioService {
     async enviarRelatorioSemanal(): Promise<void> {
         this.logger.log('Iniciando o envio do relatório semanal...');
         const usuarios = await this.usuarioService.listarBolsistas();
-        let mensagemRelatorio = 'Relatório Semanal de Presença:\n\n';
+        const dadosUsuarios = [];
 
         for (const usuario of usuarios) {
-            const periodo = 'day';
-            const { totalMinutos } = await this.registroService.calcularTempoTotal(usuario.usuarioID, periodo);
-
-            const horas = Math.floor(Number(totalMinutos) / 60);
-            const minutos = Number(totalMinutos) % 60;
-
-            mensagemRelatorio += `${usuario.nome}: ${horas} horas e ${minutos} minutos\n`;
+            const periodo = 'week';
+            const tempoTotal = await this.registroService.calcularTempoTotal(usuario.usuarioID, periodo);
+            dadosUsuarios.push({ nome: usuario.nome, ...tempoTotal });
         }
 
         for (const admin of usuarios.filter(u => u.cargo === 'admin')) {
-            await this.emailService.enviarEmail(admin.email, 'Relatório Semanal de Presença', mensagemRelatorio);
+            await this.emailService.enviarRelatorioSemanal(admin.email, dadosUsuarios);
         }
 
         this.logger.log('Relatório semanal enviado com sucesso.');
     }
+
 }

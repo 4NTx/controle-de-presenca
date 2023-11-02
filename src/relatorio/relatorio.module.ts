@@ -5,6 +5,7 @@ import { EmailModule } from '../email/email.module';
 import { UsuarioModule } from '../usuario/usuarios.module';
 import { RegistroModule } from '../registro/registro.module';
 import { Registro } from '../registro/registro.entity';
+import { RelatorioController } from './relatorio.controller';
 
 @Module({
   imports: [
@@ -14,6 +15,6 @@ import { Registro } from '../registro/registro.entity';
     UsuarioModule,
   ],
   providers: [RelatorioService],
-  controllers: [],
+  controllers: [RelatorioController],
 })
 export class RelatorioModule { }
