@@ -46,23 +46,28 @@ export class AuthService {
         return this.usuarioRepository.findOne({ where: { email } });
     }
 
-    async verificarUsuarioOuCartaoExistente(email: string, cartaoID: string) {
+    async verificarUsuarioOuNomeOuCartaoExistente(email: string, cartaoID: string, nome: string) {
         const usuarioEmail = await this.usuarioRepository.findOne({ where: { email } });
         const usuarioCartaoID = await this.usuarioRepository.findOne({ where: { cartaoID } });
+        const nomeUsuario = await this.usuarioRepository.findOne({ where: { nome } });
 
         if (usuarioEmail) {
-            throw new ConflictException('Já existe um usuário com esse e-mail.');
+            throw new ConflictException('Já existe um usuário registrado com esse e-mail.');
         }
 
         if (usuarioCartaoID) {
-            throw new ConflictException('Já existe um usuário com esse ID de cartão.');
+            throw new ConflictException('Já existe um usuário registrado com esse ID de cartão.');
+        }
+
+        if (nomeUsuario) {
+            throw new ConflictException('Já existe um usuário registrado com esse nome.');
         }
     }
 
     async gerarTokenRecuperacaoSenha(email: string): Promise<void> {
         const usuario = await this.procurarUsuarioPorEmail(email);
         if (!usuario) {
-            throw new ConflictException('Não existe uma conta com esse e-mail. 🚫');
+            throw new ConflictException('Não existe uma conta com esse e-mail.');
         }
         const token = uuidv4();
         usuario.tokenRecuperacaoSenha = token;
@@ -77,23 +82,20 @@ export class AuthService {
     async validarTokenRecuperacaoSenha(email: string, token: string): Promise<boolean> {
         const usuario = await this.usuarioRepository.findOne({ where: { tokenRecuperacaoSenha: token } });
         if (!usuario || !usuario.dataExpiracaoTokenRecuperacao || new Date() > usuario.dataExpiracaoTokenRecuperacao) {
-            throw new NotFoundException('Token inválido ou expirado. 🕰️');
+            throw new NotFoundException('Token inválido ou expirado.');
         }
         if (usuario.email !== email) {
-            throw new BadRequestException('E-mail não corresponde ao que solicitou a recuperação. 🚫');
+            throw new BadRequestException('E-mail não corresponde ao que solicitou a recuperação.');
         }
-
         return true;
     }
 
     async redefinirSenha(email: string, novaSenha: string, token: string): Promise<void> {
         await this.validarTokenRecuperacaoSenha(email, token);
         const usuario = await this.procurarUsuarioPorEmail(email);
-
         usuario.senha = await bcrypt.hash(novaSenha, 12);
         usuario.tokenRecuperacaoSenha = null;
         usuario.dataExpiracaoTokenRecuperacao = null;
-
         await this.usuarioRepository.save(usuario);
     }
 }
