@@ -4,6 +4,7 @@ import { Repository, Between } from 'typeorm';
 import { Registro } from './registro.entity';
 import { Usuario } from '../usuario/usuario.entity';
 import * as moment from 'moment';
+import { MetaService } from 'src/meta/meta.service';
 moment.locale('pt-br');
 
 @Injectable()
@@ -13,6 +14,7 @@ export class RegistroService {
         private registroRepository: Repository<Registro>,
         @InjectRepository(Usuario)
         private usuarioRepository: Repository<Usuario>,
+        private metaService: MetaService,
     ) { }
 
     async registrarPresenca(cartaoID: string): Promise<string> {
@@ -29,6 +31,7 @@ export class RegistroService {
         const agora = new Date();
         const hoje = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
         const dataUltimoRegistro = ultimoRegistro ? new Date(ultimoRegistro.dataHoraEntrada) : null;
+        let respostaMensagem = '';
 
         if (!ultimoRegistro || dataUltimoRegistro < hoje) {
             const novoRegistro = this.registroRepository.create({
@@ -36,7 +39,7 @@ export class RegistroService {
                 dataHoraEntrada: agora,
             });
             await this.registroRepository.save(novoRegistro);
-            return 'Entrada registrada com sucesso!';
+            respostaMensagem = 'Entrada registrada com sucesso!';
         } else if (ultimoRegistro.dataHoraSaida) {
             const umaHora = 60 * 60 * 1000;
             const diferenca = agora.getTime() - new Date(ultimoRegistro.dataHoraSaida).getTime();
@@ -47,16 +50,20 @@ export class RegistroService {
                     dataHoraEntrada: agora,
                 });
                 await this.registroRepository.save(novoRegistro);
-                return 'Entrada registrada com sucesso!';
+                respostaMensagem = 'Entrada registrada com sucesso!';
             } else {
-                return 'Aguarde 1 hora após a última saída para registrar uma nova entrada.';
+                respostaMensagem = 'Aguarde 1 hora após a última saída para registrar uma nova entrada.';
             }
         } else {
             ultimoRegistro.dataHoraSaida = agora;
             await this.registroRepository.save(ultimoRegistro);
-            return 'Saída registrada com sucesso!';
+            respostaMensagem = 'Saída registrada com sucesso!';
         }
+
+        await this.verificarMetasCumpridas(usuario);
+        return respostaMensagem;
     }
+
 
     async calcularTempoTotal(usuarioID: number, periodo: string, dataInicio?: string, dataFim?: string): Promise<{ usuario: string, email: string, rfid: string, totalMinutos: number, totalHoras: number, ultimaEntrada: Date, ultimaSaida: Date }> {
         const usuario = await this.usuarioRepository.findOne({ where: { usuarioID } });
@@ -134,5 +141,29 @@ export class RegistroService {
             totalDePaginasPossiveis
         };
     }
-}
 
+    async verificarMetasCumpridas(usuario: Usuario) {
+        const metas = await this.metaService.buscarMetasUsuario(usuario.usuarioID);
+        for (const meta of metas) {
+            const tipoMetaToPeriodo = {
+                diaria: 'day',
+                semanal: 'week',
+                mensal: 'month',
+                semestral: 'quarter',
+                anual: 'year',
+            };
+
+            const periodoValido = tipoMetaToPeriodo[meta.tipoMeta];
+            if (!periodoValido) {
+                throw new BadRequestException(`Período inválido: ${meta.tipoMeta}`);
+            }
+
+            const tempoTotal = await this.calcularTempoTotal(usuario.usuarioID, periodoValido);
+            const metaCumprida = tempoTotal.totalMinutos >= (meta.horas * 60);
+            if (metaCumprida && !meta.metaCumprida) {
+                await this.metaService.atualizarStatusMeta(meta.metaID, true);
+            }
+        }
+    }
+
+}

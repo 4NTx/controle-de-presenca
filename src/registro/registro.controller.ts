@@ -11,6 +11,7 @@ export class RegistroController {
     @Post('presenca')
     async registrarPresenca(@Body('cartaoID') cartaoID: string): Promise<string> {
         return await this.registroService.registrarPresenca(cartaoID);
+        
     }
 
     @UseGuards(JwtAuthGuard, AdminAuthGuard)

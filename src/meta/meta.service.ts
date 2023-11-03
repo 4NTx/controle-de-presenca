@@ -35,6 +35,7 @@ export class MetaService {
             meta.dataCriacao = new Date();
         }
         meta.horas = horas;
+        meta.metaCumprida = null;
         meta.tipoMeta = tipoMeta;
         meta.comentario = comentario;
         meta.admin = admin;
@@ -83,4 +84,15 @@ export class MetaService {
         return dataExpiracao;
     }
 
+    async buscarMetasUsuario(usuarioID: number): Promise<Meta[]> {
+        return await this.metaRepository.find({ where: { usuario: { usuarioID: usuarioID } } });
+    }
+
+    async atualizarStatusMeta(metaID: number, status: boolean): Promise<void> {
+        const meta = await this.metaRepository.findOne({ where: { metaID } });
+        if (meta) {
+            meta.metaCumprida = status;
+            await this.metaRepository.save(meta);
+        }
+    }
 }

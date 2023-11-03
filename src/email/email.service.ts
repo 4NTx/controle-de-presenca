@@ -119,17 +119,35 @@ export class EmailService {
             const minutos = Math.round(Number(usuario.totalMinutos) % 60);
             const ultimaEntrada = usuario.ultimaEntrada ? new Date(usuario.ultimaEntrada).toLocaleString() : 'N/A';
             const ultimaSaida = usuario.ultimaSaida ? new Date(usuario.ultimaSaida).toLocaleString() : 'N/A';
+            let metasInfo = '';
+            if (usuario.metasInfo && usuario.metasInfo.length > 0) {
+                metasInfo += '<ul>';
+                for (const meta of usuario.metasInfo) {
+                    const cumpriuMeta = meta.cumpriuMeta ? 'Cumprida' : 'Não cumprida, ou ainda não finalizada';
+                    const tipoMeta = meta.tipoMeta || 'Tipo não especificado';
+                    const dataInicioMeta = new Date(meta.dataInicioMeta).toLocaleDateString();
+                    const dataFimMeta = new Date(meta.dataFimMeta).toLocaleDateString();
+                    metasInfo += `<li>
+                                    Tipo: ${tipoMeta}
+                                    Status: ${cumpriuMeta}<br>
+                                    Data de Início: ${dataInicioMeta}
+                                    Data de Fim: ${dataFimMeta}
+                                  </li>`;
+                }
+                metasInfo += '</ul>';
+            } else {
+                metasInfo = 'Nenhuma meta definida.';
+            }
 
             conteudo += `<li>
-                            <strong>${usuario.usuario}</strong> (${usuario.email}):<br>
+                            <strong>${usuario.nome}</strong> (${usuario.email}):<br>
                             - Tempo total: ${horas} horas e ${minutos} minutos<br>
                             - Última entrada: ${ultimaEntrada}<br>
-                            - Última saída: ${ultimaSaida}
+                            - Última saída: ${ultimaSaida}<br>
+                            - Metas: ${metasInfo}
                          </li>`;
         }
-
         conteudo += '</ul><p>Atenciosamente,</p><p>Equipe</p>';
-
         await this.enviarEmail(adminEmail, assunto, conteudo);
     }
 

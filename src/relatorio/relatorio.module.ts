@@ -6,6 +6,7 @@ import { UsuarioModule } from '../usuario/usuarios.module';
 import { RegistroModule } from '../registro/registro.module';
 import { Registro } from '../registro/registro.entity';
 import { RelatorioController } from './relatorio.controller';
+import { MetaModule } from 'src/meta/meta.modules';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { RelatorioController } from './relatorio.controller';
     RegistroModule,
     EmailModule,
     UsuarioModule,
+    MetaModule
   ],
   providers: [RelatorioService],
   controllers: [RelatorioController],

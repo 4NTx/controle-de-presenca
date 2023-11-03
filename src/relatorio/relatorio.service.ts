@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { UsuarioService } from '../usuario/usuario.service';
 import { RegistroService } from '../registro/registro.service';
+import { MetaService } from '../meta/meta.service';  // Adicionado importação do MetaService
 import { EmailService } from '../email/email.service';
 import { Cron } from '@nestjs/schedule';
 
@@ -11,6 +12,7 @@ export class RelatorioService {
     constructor(
         private usuarioService: UsuarioService,
         private registroService: RegistroService,
+        private metaService: MetaService,  // Adicionado MetaService como dependência
         private emailService: EmailService,
     ) { }
 
@@ -25,7 +27,16 @@ export class RelatorioService {
         for (const usuario of usuarios) {
             const periodo = 'week';
             const tempoTotal = await this.registroService.calcularTempoTotal(usuario.usuarioID, periodo);
-            dadosUsuarios.push({ nome: usuario.nome, ...tempoTotal });
+            const metas = await this.metaService.buscarMetasUsuario(usuario.usuarioID);
+
+            const metasInfo = metas.map(meta => ({
+                cumpriuMeta: meta.metaCumprida,
+                tipoMeta: meta.tipoMeta,
+                dataInicioMeta: meta.dataCriacao,
+                dataFimMeta: meta.dataExpiracao
+            }));
+
+            dadosUsuarios.push({ nome: usuario.nome, ...tempoTotal, metasInfo });
         }
 
         for (const admin of usuarios.filter(u => u.cargo === 'admin')) {
@@ -34,5 +45,4 @@ export class RelatorioService {
 
         this.logger.log('Relatório semanal enviado com sucesso.');
     }
-
 }
