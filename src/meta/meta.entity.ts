@@ -6,6 +6,12 @@ export class Meta {
     @PrimaryGeneratedColumn()
     metaID: number;
 
+    @Column({ type: 'enum', enum: ['diaria', 'mensal', 'semanal', 'semestral', 'anual'] })
+    tipoMeta: string;
+
+    @Column({ type: 'text', nullable: true })
+    comentario: string;
+
     @ManyToOne(() => Usuario)
     @JoinColumn({ name: 'usuarioID' })
     usuario: Usuario;
@@ -14,18 +20,18 @@ export class Meta {
     @JoinColumn({ name: 'adminID' })
     admin: Usuario;
 
-    @Column()
+    @Column({ nullable: true })
     horas: number;
 
     @Column()
     dataCriacao: Date;
 
-    @Column()
+    @Column({ nullable: true })
     dataExpiracao: Date;
 
-    @Column()
+    @Column({ nullable: true })
     dataAtualizacao: Date;
 
     @Column({ nullable: true })
-    cumpriu?: boolean;
+    metaCumprida?: boolean;
 }

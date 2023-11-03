@@ -32,10 +32,12 @@ export class MetaController {
     async definirMeta(
         @Req() req: Request,
         @Body('usuarioID') usuarioID: number,
-        @Body('horas') horas: number
+        @Body('horas') horas: number,
+        @Body('tipoMeta') tipoMeta: string,
+        @Body('comentario') comentario: string,
     ): Promise<Meta> {
         const admin = (req as any).user as Usuario;
         const usuario = await this.usuarioService.buscarUsuarioPorID(usuarioID);
-        return this.metaService.criarOuAtualizarMeta(usuario, horas, admin);
-    }
+        return this.metaService.criarOuAtualizarMeta(usuario, horas, tipoMeta, comentario, admin);
+    }    
 }

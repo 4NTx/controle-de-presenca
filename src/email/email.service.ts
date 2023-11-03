@@ -1,7 +1,6 @@
 import { Injectable, InternalServerErrorException, forwardRef, Inject } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 import { UsuarioService } from 'src/usuario/usuario.service';
-import { v4 as uuidv4 } from 'uuid';
 import * as config from 'dotenv';
 
 config.config();
@@ -12,7 +11,7 @@ export class EmailService {
 
     constructor(
         @Inject(forwardRef(() => UsuarioService))
-        private usuarioService: UsuarioService
+        private usuarioService: UsuarioService,
     ) {
         this.transporte = nodemailer.createTransport({
             host: process.env.EMAIL_SMTP,
@@ -28,6 +27,7 @@ export class EmailService {
     async enviarEmail(para: string, assunto: string, conteudoOriginal: string, incluirLinkCancelamento: boolean = true, forcarEnvio: boolean = false) {
         const usuario = await this.usuarioService.procurarUsuarioPorEmail(para);
         if (usuario && !usuario.aceitaEmails && !forcarEnvio) {
+            console.log(`Usuário ${usuario.email} optou por não receber emails, pulando envio de email`);
             return 'Usuário optou por não receber emails';
         }
         let conteudo = conteudoOriginal;
@@ -132,4 +132,31 @@ export class EmailService {
 
         await this.enviarEmail(adminEmail, assunto, conteudo);
     }
+
+    async enviarEmailNovaMeta(emailUsuario: string, tipoMeta: string, horas: number, comentario?: string, dataExpiracao?: Date) {
+        const diaHoje = new Date().toLocaleDateString();
+        const diasRestantes = Math.floor((dataExpiracao.getTime() - new Date().getTime()) / (1000 * 3600 * 24));
+        const assunto = '[REXLAB] 🎯Nova Meta Definida';
+        const conteudo = `
+        <div style="background-color: #f8f9fa; padding: 20px; font-family: Arial, sans-serif;">
+            <div style="max-width: 600px; margin: auto; text-align:center;background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.15);">
+                <h2 style="color: #007bff;">Nova Meta Definida 🎯</h2>
+                <p>Olá,</p>
+                <p>Uma nova meta foi definida para você:</p>
+            <ul style="list-style-type: none;">
+                <li><strong>Tipo Meta:</strong> ${tipoMeta}</li>
+                <li><strong>Horas:</strong> ${horas}</li>
+                <li><strong>Comentário:</strong> ${comentario || 'Nenhum'}</li>
+                <li><strong>Você tem:</strong> ${diasRestantes} dias a partir de ${diaHoje} para cumprir a meta</li>
+                <li><strong>Você deve cumprir a meta até o dia:</strong> ${dataExpiracao.toLocaleDateString()}</li>
+            </ul>
+                <p>Por favor, certifique-se de cumprir a meta dentro do prazo estabelecido.</p>
+                <p>Atenciosamente,</p>
+                <p>Equipe</p>
+            </div>
+        </div>
+        `;
+        await this.enviarEmail(emailUsuario, assunto, conteudo);
+    }
+
 }
