@@ -49,7 +49,7 @@ export class RegistroService {
                 await this.registroRepository.save(novoRegistro);
                 return 'Entrada registrada com sucesso!';
             } else {
-                return 'Aguarde 1 hora após a última saída para registrar uma nova entrada. ⏰';
+                return 'Aguarde 1 hora após a última saída para registrar uma nova entrada.';
             }
         } else {
             ultimoRegistro.dataHoraSaida = agora;
@@ -66,7 +66,7 @@ export class RegistroService {
 
         const periodosValidos: Array<moment.unitOfTime.StartOf> = ['day', 'week', 'month', 'quarter', 'year'];
         if (!periodosValidos.includes(periodo as moment.unitOfTime.StartOf)) {
-            throw new BadRequestException('Período inválido\nPeríodos válidos: day, week, month, quarter, year');
+            throw new BadRequestException('Período inválido\n Períodos válidos: day, week, month, quarter, year');
         }
 
         let inicioPeriodo = moment().startOf(periodo as moment.unitOfTime.StartOf);

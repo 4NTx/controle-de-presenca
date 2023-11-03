@@ -132,13 +132,4 @@ export class EmailService {
 
         await this.enviarEmail(adminEmail, assunto, conteudo);
     }
-
-
-    //    let conteudo = `
-    //    <div style="background-color: #f8f9fa; padding: 20px; font-family: Arial, sans-serif;">
-    //        <div style="max-width: 600px; margin: auto; background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.15);">
-    //            <h2 style="color: #007bff;">Relatório Semanal de Presença 📊</h2>
-    //            <p>Relatório Semanal de Presença:</p>
-    //            <ul style="list-style-type: none; padding: 0;">
-    //`;
 }
