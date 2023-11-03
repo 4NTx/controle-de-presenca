@@ -4,7 +4,6 @@ import { Repository, Between } from 'typeorm';
 import { Registro } from './registro.entity';
 import { Usuario } from '../usuario/usuario.entity';
 import * as moment from 'moment';
-import { MetaService } from 'src/meta/meta.service';
 moment.locale('pt-br');
 
 @Injectable()
@@ -13,8 +12,7 @@ export class RegistroService {
         @InjectRepository(Registro)
         private registroRepository: Repository<Registro>,
         @InjectRepository(Usuario)
-        private usuarioRepository: Repository<Usuario>,
-        private metaService: MetaService,
+        private usuarioRepository: Repository<Usuario>
     ) { }
 
     async registrarPresenca(cartaoID: string): Promise<string> {
@@ -59,8 +57,6 @@ export class RegistroService {
             await this.registroRepository.save(ultimoRegistro);
             respostaMensagem = 'Saída registrada com sucesso!';
         }
-
-        await this.verificarMetasCumpridas(usuario);
         return respostaMensagem;
     }
 
@@ -141,29 +137,23 @@ export class RegistroService {
             totalDePaginasPossiveis
         };
     }
-
-    async verificarMetasCumpridas(usuario: Usuario) {
-        const metas = await this.metaService.buscarMetasUsuario(usuario.usuarioID);
-        for (const meta of metas) {
-            const tipoMetaToPeriodo = {
-                diaria: 'day',
-                semanal: 'week',
-                mensal: 'month',
-                semestral: 'quarter',
-                anual: 'year',
-            };
-
-            const periodoValido = tipoMetaToPeriodo[meta.tipoMeta];
-            if (!periodoValido) {
-                throw new BadRequestException(`Período inválido: ${meta.tipoMeta}`);
+    async calcularTempoTotalEmMinutos(usuarioID: number, dataInicio: Date, dataFim: Date): Promise<number> {
+        const registros = await this.registroRepository.find({
+            where: {
+                usuario: { usuarioID },
+                dataHoraEntrada: Between(dataInicio, dataFim)
             }
+        });
 
-            const tempoTotal = await this.calcularTempoTotal(usuario.usuarioID, periodoValido);
-            const metaCumprida = tempoTotal.totalMinutos >= (meta.horas * 60);
-            if (metaCumprida && !meta.metaCumprida) {
-                await this.metaService.atualizarStatusMeta(meta.metaID, true);
-            }
-        }
+        let totalMinutos = 0;
+        registros.forEach(registro => {
+            const entrada = new Date(registro.dataHoraEntrada);
+            const saida = registro.dataHoraSaida ? new Date(registro.dataHoraSaida) : new Date();
+            const diferenca = (saida.getTime() - entrada.getTime()) / (1000 * 60);
+            totalMinutos += diferenca;
+        });
+
+        return totalMinutos;
     }
 
 }

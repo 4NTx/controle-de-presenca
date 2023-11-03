@@ -2,6 +2,7 @@ import { Injectable, InternalServerErrorException, forwardRef, Inject } from '@n
 import * as nodemailer from 'nodemailer';
 import { UsuarioService } from 'src/usuario/usuario.service';
 import * as config from 'dotenv';
+import { RegistroService } from 'src/registro/registro.service';
 
 config.config();
 
@@ -11,7 +12,7 @@ export class EmailService {
 
     constructor(
         @Inject(forwardRef(() => UsuarioService))
-        private usuarioService: UsuarioService,
+        private usuarioService: UsuarioService
     ) {
         this.transporte = nodemailer.createTransport({
             host: process.env.EMAIL_SMTP,
@@ -109,72 +110,4 @@ export class EmailService {
 `;
         await this.enviarEmail(email, assunto, conteudo);
     }
-
-    async enviarRelatorioSemanal(adminEmail: string, usuarios: any[]) {
-        const assunto = 'Relatório Semanal de Presença 📊';
-        let conteudo = '<p>Relatório Semanal de Presença:</p><ul>';
-
-        for (const usuario of usuarios) {
-            const horas = Math.floor(Number(usuario.totalMinutos) / 60);
-            const minutos = Math.round(Number(usuario.totalMinutos) % 60);
-            const ultimaEntrada = usuario.ultimaEntrada ? new Date(usuario.ultimaEntrada).toLocaleString() : 'N/A';
-            const ultimaSaida = usuario.ultimaSaida ? new Date(usuario.ultimaSaida).toLocaleString() : 'N/A';
-            let metasInfo = '';
-            if (usuario.metasInfo && usuario.metasInfo.length > 0) {
-                metasInfo += '<ul>';
-                for (const meta of usuario.metasInfo) {
-                    const cumpriuMeta = meta.cumpriuMeta ? 'Cumprida' : 'Não cumprida, ou ainda não finalizada';
-                    const tipoMeta = meta.tipoMeta || 'Tipo não especificado';
-                    const dataInicioMeta = new Date(meta.dataInicioMeta).toLocaleDateString();
-                    const dataFimMeta = new Date(meta.dataFimMeta).toLocaleDateString();
-                    metasInfo += `<li>
-                                    Tipo: ${tipoMeta}
-                                    Status: ${cumpriuMeta}<br>
-                                    Data de Início: ${dataInicioMeta}
-                                    Data de Fim: ${dataFimMeta}
-                                  </li>`;
-                }
-                metasInfo += '</ul>';
-            } else {
-                metasInfo = 'Nenhuma meta definida.';
-            }
-
-            conteudo += `<li>
-                            <strong>${usuario.nome}</strong> (${usuario.email}):<br>
-                            - Tempo total: ${horas} horas e ${minutos} minutos<br>
-                            - Última entrada: ${ultimaEntrada}<br>
-                            - Última saída: ${ultimaSaida}<br>
-                            - Metas: ${metasInfo}
-                         </li>`;
-        }
-        conteudo += '</ul><p>Atenciosamente,</p><p>Equipe</p>';
-        await this.enviarEmail(adminEmail, assunto, conteudo);
-    }
-
-    async enviarEmailNovaMeta(emailUsuario: string, tipoMeta: string, horas: number, comentario?: string, dataExpiracao?: Date) {
-        const diaHoje = new Date().toLocaleDateString();
-        const diasRestantes = Math.floor((dataExpiracao.getTime() - new Date().getTime()) / (1000 * 3600 * 24));
-        const assunto = '[REXLAB] 🎯Nova Meta Definida';
-        const conteudo = `
-        <div style="background-color: #f8f9fa; padding: 20px; font-family: Arial, sans-serif;">
-            <div style="max-width: 600px; margin: auto; text-align:center;background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.15);">
-                <h2 style="color: #007bff;">Nova Meta Definida 🎯</h2>
-                <p>Olá,</p>
-                <p>Uma nova meta foi definida para você:</p>
-            <ul style="list-style-type: none;">
-                <li><strong>Tipo Meta:</strong> ${tipoMeta}</li>
-                <li><strong>Horas:</strong> ${horas}</li>
-                <li><strong>Comentário:</strong> ${comentario || 'Nenhum'}</li>
-                <li><strong>Você tem:</strong> ${diasRestantes} dias a partir de ${diaHoje} para cumprir a meta</li>
-                <li><strong>Você deve cumprir a meta até o dia:</strong> ${dataExpiracao.toLocaleDateString()}</li>
-            </ul>
-                <p>Por favor, certifique-se de cumprir a meta dentro do prazo estabelecido.</p>
-                <p>Atenciosamente,</p>
-                <p>Equipe</p>
-            </div>
-        </div>
-        `;
-        await this.enviarEmail(emailUsuario, assunto, conteudo);
-    }
-
 }

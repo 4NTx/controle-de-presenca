@@ -2,8 +2,6 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsuarioModule } from './usuario/usuarios.module';
 import { RegistroModule } from './registro/registro.module';
-import { MetaModule } from './meta/meta.modules';
-import { RelatorioModule } from './relatorio/relatorio.module';
 import { AuthModule } from './auth/auth.module';
 import { EmailModule } from './email/email.module';
 import * as config from 'dotenv';
@@ -26,8 +24,6 @@ config.config();
     }),
     UsuarioModule,
     RegistroModule,
-    RelatorioModule,
-    MetaModule,
     AuthModule,
     EmailModule,
   ],
