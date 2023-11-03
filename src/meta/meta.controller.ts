@@ -1,7 +1,7 @@
 import { Controller, Body, Post, Req, Get, UseGuards } from '@nestjs/common';
 import { MetaService } from './meta.service';
 import { Meta } from './meta.entity';
-import { JwtAuthGuard } from 'src/jwt/jwt-auth.guard';
+import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { AdminAuthGuard } from 'src/guards/admin-auth.guard';
 import { Request } from 'express';
 import { UsuarioService } from '../usuario/usuario.service';
@@ -11,8 +11,8 @@ import { Usuario } from 'src/usuario/usuario.entity';
 export class MetaController {
     constructor(private metaService: MetaService, private usuarioService: UsuarioService) { }
 
-    @Get('listar-metas')
     @UseGuards(JwtAuthGuard, AdminAuthGuard)
+    @Get('listar-metas')
     async listarMetas() {
         const metas = await this.metaService.listarMetas();
         return metas.map(meta => ({
@@ -27,8 +27,8 @@ export class MetaController {
         }));
     }
 
-    @Post('definir-meta')
     @UseGuards(JwtAuthGuard, AdminAuthGuard)
+    @Post('definir-meta')
     async definirMeta(
         @Req() req: Request,
         @Body('usuarioID') usuarioID: number,

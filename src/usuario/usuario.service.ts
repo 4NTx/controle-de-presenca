@@ -51,7 +51,7 @@ export class UsuarioService {
     async buscarEAtualizarUsuario(email: string, atualizacoes: Partial<Usuario>): Promise<Usuario> {
         const usuario = await this.usuarioRepository.findOne({ where: { email } });
         if (!usuario) {
-            throw new NotFoundException('Usuário não encontrado 🤷‍♂️');
+            throw new NotFoundException('Usuário não encontrado');
         }
         Object.assign(usuario, atualizacoes);
         await this.usuarioRepository.save(usuario);

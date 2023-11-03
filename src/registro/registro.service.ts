@@ -18,7 +18,7 @@ export class RegistroService {
     async registrarPresenca(cartaoID: string): Promise<string> {
         const usuario = await this.usuarioRepository.findOne({ where: { cartaoID } });
         if (!usuario) {
-            return 'Usuário não encontrado 😢';
+            return 'Usuário não encontrado neste Cartão RFID.';
         }
 
         const ultimoRegistro = await this.registroRepository.findOne({
@@ -36,9 +36,9 @@ export class RegistroService {
                 dataHoraEntrada: agora,
             });
             await this.registroRepository.save(novoRegistro);
-            return 'Entrada registrada com sucesso! 👋';
+            return 'Entrada registrada com sucesso!';
         } else if (ultimoRegistro.dataHoraSaida) {
-            const umaHora = 60 * 60 * 1000;  // 1 hora em milissegundos  const umaHora = 60 * 60 * 1000;
+            const umaHora = 60 * 60 * 1000;
             const diferenca = agora.getTime() - new Date(ultimoRegistro.dataHoraSaida).getTime();
 
             if (diferenca >= umaHora) {
@@ -47,14 +47,14 @@ export class RegistroService {
                     dataHoraEntrada: agora,
                 });
                 await this.registroRepository.save(novoRegistro);
-                return 'Entrada registrada com sucesso! 👋';
+                return 'Entrada registrada com sucesso!';
             } else {
                 return 'Aguarde 1 hora após a última saída para registrar uma nova entrada. ⏰';
             }
         } else {
             ultimoRegistro.dataHoraSaida = agora;
             await this.registroRepository.save(ultimoRegistro);
-            return 'Saída registrada com sucesso! 👋';
+            return 'Saída registrada com sucesso!';
         }
     }
 

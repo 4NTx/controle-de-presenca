@@ -1,7 +1,7 @@
 import { Controller, Get, UseGuards, Post, Body, Query } from '@nestjs/common';
 import { RegistroService } from './registro.service';
 import { AdminAuthGuard } from 'src/guards/admin-auth.guard';
-import { JwtAuthGuard } from 'src/jwt/jwt-auth.guard';
+import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { Registro } from './registro.entity';
 
 @Controller('registro')
@@ -13,6 +13,7 @@ export class RegistroController {
         return await this.registroService.registrarPresenca(cartaoID);
     }
 
+    @UseGuards(JwtAuthGuard, AdminAuthGuard)
     @Get('calcular-tempo-total')
     async calcularTempoTotal(
         @Query('usuarioID') usuarioID: number = 0,
@@ -22,14 +23,11 @@ export class RegistroController {
     ): Promise<{ usuario: string, email: string, rfid: string, totalMinutos: number, totalHoras: number }> {
         return await this.registroService.calcularTempoTotal(usuarioID, periodo, dataInicio, dataFim);
     }
-    //GET /registro/calcular-tempo-total?usuarioID=1&periodo=week
-    //GET /registro/calcular-tempo-total?usuarioID=1&dataInicio=2023-01-01&dataFim=2023-01-31
-    //GET /registro/calcular-tempo-total?usuarioID=1&periodo=week&dataInicio=2023-01-01&dataFim=2023-01-31
 
-
+    @UseGuards(JwtAuthGuard, AdminAuthGuard)
     @Get('buscar-registros')
     async buscarRegistros(
-        @Query('pagina') pagina: number = 1, //registro/buscar-registros?pagina=1&itensPorPagina=1&email=EMAIl
+        @Query('pagina') pagina: number = 1,
         @Query('itensPorPagina') itensPorPagina: number = 50,
         @Query('email') email?: string
     ): Promise<{ registros: Registro[], total: number }> {

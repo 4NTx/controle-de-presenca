@@ -22,7 +22,7 @@ config.config();
       synchronize: true, // Alterar em Produção
       logger: "advanced-console",
       timezone: '-03:00',
-      logging: false // ["query", "error"] // Loga consultas e erros //Alterar em Produção
+      logging: false
     }),
     UsuarioModule,
     RegistroModule,
