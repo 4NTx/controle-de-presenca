@@ -1,9 +1,8 @@
 import { Injectable, NotFoundException, forwardRef, Inject } from '@nestjs/common';
-import { InjectRepository, TypeOrmModule } from '@nestjs/typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
 import { Usuario } from './usuario.entity';
 import { Repository } from 'typeorm';
 import { EmailService } from 'src/email/email.service';
-import { AuthService } from 'src/auth/auth.service';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()

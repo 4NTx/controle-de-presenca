@@ -2,7 +2,6 @@ import { Injectable, InternalServerErrorException, forwardRef, Inject } from '@n
 import * as nodemailer from 'nodemailer';
 import { UsuarioService } from 'src/usuario/usuario.service';
 import * as config from 'dotenv';
-import { RegistroService } from 'src/registro/registro.service';
 
 config.config();
 
