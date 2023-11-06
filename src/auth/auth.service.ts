@@ -97,4 +97,12 @@ export class AuthService {
         usuario.dataExpiracaoTokenRecuperacao = null;
         await this.usuarioRepository.save(usuario);
     }
+
+    async pegarEmailPorTokenRecuperacao(token: string): Promise<string> {
+        const usuario = await this.usuarioRepository.findOne({ where: { tokenRecuperacaoSenha: token } });
+        if (!usuario || !usuario.dataExpiracaoTokenRecuperacao || new Date() > usuario.dataExpiracaoTokenRecuperacao) {
+            throw new NotFoundException('Token inválido ou expirado.');
+        }
+        return usuario.email;
+    }
 }

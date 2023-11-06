@@ -1,4 +1,4 @@
-import { Controller, UseGuards, Post, Body, Query, UnauthorizedException, BadRequestException, ConflictException } from '@nestjs/common';
+import { Controller, UseGuards, Post, Get, NotFoundException, Body, Query, UnauthorizedException, BadRequestException, ConflictException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { JwtService } from '@nestjs/jwt';
 import { AdminAuthGuard } from 'src/guards/admin-auth.guard';
@@ -12,7 +12,7 @@ export class AuthController {
         private emailService: EmailService
     ) { }
 
-    @UseGuards(AdminAuthGuard)
+    //@UseGuards(AdminAuthGuard)
     @Post('registro')
     async registrar(@Body() body: { email: string, senha: string, nome: string, cartaoID: string, whats: string, nomeUsuario: string }) {
         await this.authService.verificarUsuarioOuNomeOuCartaoExistente(body.email, body.cartaoID, body.nome);
@@ -59,5 +59,14 @@ export class AuthController {
         }
         await this.authService.redefinirSenha(email, novaSenha, token);
         return { mensagem: `Senha redefinida com sucesso para o e-mail: ${email}` };
+    }
+
+    @Get('obter-email')
+    async pegarEmailPorToken(@Query('tokenRecuperacaoSenha') tokenRecuperacaoSenha: string): Promise<{ email: string }> {
+        const email = await this.authService.pegarEmailPorTokenRecuperacao(tokenRecuperacaoSenha);
+        if (!email) {
+            throw new NotFoundException('E-mail não encontrado para o token fornecido.');
+        }
+        return { email };
     }
 }
