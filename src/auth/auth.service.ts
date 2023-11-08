@@ -46,7 +46,7 @@ export class AuthService {
         return this.usuarioRepository.findOne({ where: { email } });
     }
 
-    async verificarUsuarioOuNomeOuCartaoExistente(email: string, cartaoID: string, nome: string) {
+    async verificarEmailOuNomeOuCartaoExistente(email: string, cartaoID: string, nome: string) {
         const usuarioEmail = await this.usuarioRepository.findOne({ where: { email } });
         const usuarioCartaoID = await this.usuarioRepository.findOne({ where: { cartaoID } });
         const nomeUsuario = await this.usuarioRepository.findOne({ where: { nome } });
@@ -99,7 +99,7 @@ export class AuthService {
         await this.usuarioRepository.save(usuario);
     }
 
-    async pegarEmailPorTokenRecuperacao(token: string): Promise<string> {
+    async procurarEmailPorTokenRecuperacao(token: string): Promise<string> {
         const usuario = await this.usuarioRepository.findOne({ where: { tokenRecuperacaoSenha: token } });
         if (!usuario || !usuario.dataExpiracaoTokenRecuperacao || new Date() > usuario.dataExpiracaoTokenRecuperacao) {
             throw new NotFoundException('Token inválido ou expirado.');

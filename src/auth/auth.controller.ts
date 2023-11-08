@@ -14,7 +14,7 @@ export class AuthController {
 
     @Post('registro')
     async registrar(@Body() body: { email: string, senha: string, nome: string, cartaoID: string, whats: string, nomeUsuario: string }) {
-        await this.authService.verificarUsuarioOuNomeOuCartaoExistente(body.email, body.cartaoID, body.nome);
+        await this.authService.verificarEmailOuNomeOuCartaoExistente(body.email, body.cartaoID, body.nome);
         const novoUsuario = await this.authService.registrarUsuario(body);
         return { message: 'Pedido de registro bem-sucedido! Aguarde a aprovação do administrador, você receberá um email ao ser aprovado!' };
     }
@@ -64,7 +64,7 @@ export class AuthController {
 
     @Get('obter-email')
     async pegarEmailPorToken(@Query('tokenRecuperacaoSenha') tokenRecuperacaoSenha: string): Promise<{ email: string }> {
-        const email = await this.authService.pegarEmailPorTokenRecuperacao(tokenRecuperacaoSenha);
+        const email = await this.authService.procurarEmailPorTokenRecuperacao(tokenRecuperacaoSenha);
         if (!email) {
             throw new NotFoundException('E-mail não encontrado para o token fornecido.');
         }
