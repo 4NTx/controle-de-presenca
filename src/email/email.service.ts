@@ -95,7 +95,6 @@ export class EmailService {
         await this.enviarEmail(email, assunto, conteudo, false, true);
     }
 
-
     async enviarEmailBoasVindas(email: string, nome: string) {
         const assunto = '[REXLAB] 🤝Bem-vindo(a) à nossa plataforma!';
         const conteudo = `
@@ -107,6 +106,21 @@ export class EmailService {
         </div>
     </div>
 `;
+        await this.enviarEmail(email, assunto, conteudo);
+    }
+
+    async enviarEmailNegacao(email: string) {
+        const assunto = '[REXLAB] 🚫Registro Negado';
+        const conteudo = `
+        <div style="background-color: #f8f9fa; padding: 20px; font-family: Arial, sans-serif;">
+            <div style="max-width: 600px; margin: auto; text-align:center; background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.15);">
+                <h2 style="color: #dc3545;">Registro Negado</h2>
+                <p>Olá,</p>
+                <p>Lamentamos informar que seu pedido de registro em nossa plataforma foi <strong>negado</strong>.</p>
+                <p>Se acredita que isso é um erro, ou para mais informações, por favor, entre em contato conosco.</p>
+            </div>
+        </div>
+        `;
         await this.enviarEmail(email, assunto, conteudo);
     }
 }

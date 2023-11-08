@@ -23,6 +23,9 @@ export class Usuario {
     @Column({ default: 'user' })
     cargo: 'user' | 'admin';
 
+    @Column({ default: 'pendente' })
+    statusRegistro: 'pendente' | 'ativo' | 'negado';
+
     @Column({ nullable: true })
     tokenRecuperacaoSenha: string;
 

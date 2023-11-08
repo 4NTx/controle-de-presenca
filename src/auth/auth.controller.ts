@@ -1,4 +1,4 @@
-import { Controller, UseGuards, Post, Get, NotFoundException, Body, Query, UnauthorizedException, BadRequestException, ConflictException } from '@nestjs/common';
+import { Controller, Patch, UseGuards, Post, Get, NotFoundException, Body, Query, UnauthorizedException, BadRequestException, ConflictException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { JwtService } from '@nestjs/jwt';
 import { AdminAuthGuard } from 'src/guards/admin-auth.guard';
@@ -12,13 +12,11 @@ export class AuthController {
         private emailService: EmailService
     ) { }
 
-    //@UseGuards(AdminAuthGuard)
     @Post('registro')
     async registrar(@Body() body: { email: string, senha: string, nome: string, cartaoID: string, whats: string, nomeUsuario: string }) {
         await this.authService.verificarUsuarioOuNomeOuCartaoExistente(body.email, body.cartaoID, body.nome);
         const novoUsuario = await this.authService.registrarUsuario(body);
-        this.emailService.enviarEmailBoasVindas(body.email, body.nome);
-        return { message: 'Registro bem-sucedido!' };
+        return { message: 'Pedido de registro bem-sucedido! Aguarde a aprovação do administrador, você receberá um email ao ser aprovado!' };
     }
 
     @Post('login')
@@ -26,6 +24,9 @@ export class AuthController {
         const usuario = await this.authService.validarSenhaUsuario(body.email, body.senha);
         if (!usuario) {
             throw new UnauthorizedException('Credenciais inválidas.');
+        }
+        if (usuario.statusRegistro !== 'ativo') {
+            throw new UnauthorizedException('Sua conta ainda não foi ativada. Aguarde a aprovação de um administrador, você receberá um email ao ser aprovado!');
         }
         const payload = {
             email: usuario.email,
@@ -68,5 +69,28 @@ export class AuthController {
             throw new NotFoundException('E-mail não encontrado para o token fornecido.');
         }
         return { email };
+    }
+
+    //@UseGuards(AdminAuthGuard)
+    @Get('usuarios-pendentes')
+    async listarPendentes() {
+        return this.authService.listarUsuariosPendentes();
+    }
+
+    //@UseGuards(AdminAuthGuard)
+    @Patch('administrar-registro')
+    async administrarRegistro(@Body() body: { email: string, acao: 'aprovar' | 'negar' }) {
+        const usuario = await this.authService.procurarUsuarioPorEmail(body.email);
+        if (!usuario) {
+            throw new NotFoundException('Usuário não encontrado.');
+        }
+        if (body.acao === 'aprovar') {
+            await this.authService.aprovarRegistro(usuario.usuarioID);
+            this.emailService.enviarEmailBoasVindas(usuario.email, usuario.nome);
+        } else {
+            await this.authService.negarRegistro(usuario.usuarioID);
+            this.emailService.enviarEmailNegacao(usuario.email);
+        }
+        return { mensagem: `Registro marcado como '${body.acao}' com sucesso.`, email: usuario.email };
     }
 }

@@ -26,6 +26,7 @@ export class AuthService {
             cartaoID: dadosUsuario.cartaoID,
             cargo: 'user',
             hashEmail: hashEmail,
+            statusRegistro: 'pendente',
             novoHashEmail: novoHashEmail,
         });
         await this.usuarioRepository.save(novoUsuario);
@@ -104,5 +105,17 @@ export class AuthService {
             throw new NotFoundException('Token inválido ou expirado.');
         }
         return usuario.email;
+    }
+
+    async listarUsuariosPendentes(): Promise<Usuario[]> {
+        return this.usuarioRepository.find({ where: { statusRegistro: 'pendente' } });
+    }
+
+    async aprovarRegistro(usuarioID: number): Promise<void> {
+        await this.usuarioRepository.update(usuarioID, { statusRegistro: 'ativo' });
+    }
+
+    async negarRegistro(usuarioID: number): Promise<void> {
+        await this.usuarioRepository.update(usuarioID, { statusRegistro: 'negado' });
     }
 }
