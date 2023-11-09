@@ -71,13 +71,13 @@ export class AuthController {
         return { email };
     }
 
-    //@UseGuards(AdminAuthGuard)
+    //@UseGuards(JwtAuthGuard, AdminAuthGuard)
     @Get('usuarios-pendentes')
     async listarPendentes() {
         return this.authService.listarUsuariosPendentes();
     }
 
-    //@UseGuards(AdminAuthGuard)
+    //@UseGuards(JwtAuthGuard, AdminAuthGuard)
     @Patch('administrar-registro')
     async administrarRegistro(@Body() body: { email: string, acao: 'aprovar' | 'negar' }) {
         const usuario = await this.authService.procurarUsuarioPorEmail(body.email);

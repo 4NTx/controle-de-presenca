@@ -82,10 +82,10 @@ export class AuthService {
     async validarTokenRecuperacaoSenha(email: string, token: string): Promise<boolean> {
         const usuario = await this.usuarioRepository.findOne({ where: { tokenRecuperacaoSenha: token } });
         if (!usuario || !usuario.dataExpiracaoTokenRecuperacao || new Date() > usuario.dataExpiracaoTokenRecuperacao) {
-            throw new NotFoundException('Token inválido ou expirado.');
+            throw new NotFoundException('Token de recuperação inválido ou expirado.');
         }
         if (usuario.email !== email) {
-            throw new BadRequestException('E-mail não corresponde ao que solicitou a recuperação.');
+            throw new BadRequestException('O E-mail não corresponde ao que solicitou a recuperação.');
         }
         return true;
     }
@@ -102,7 +102,7 @@ export class AuthService {
     async procurarEmailPorTokenRecuperacao(token: string): Promise<string> {
         const usuario = await this.usuarioRepository.findOne({ where: { tokenRecuperacaoSenha: token } });
         if (!usuario || !usuario.dataExpiracaoTokenRecuperacao || new Date() > usuario.dataExpiracaoTokenRecuperacao) {
-            throw new NotFoundException('Token inválido ou expirado.');
+            throw new NotFoundException('Token de recuperação inválido ou expirado.');
         }
         return usuario.email;
     }
