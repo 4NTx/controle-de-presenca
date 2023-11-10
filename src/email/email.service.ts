@@ -1,4 +1,9 @@
-import { Injectable, InternalServerErrorException, forwardRef, Inject } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  forwardRef,
+  Inject,
+} from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 import { UsuarioService } from 'src/usuario/usuario.service';
 import * as config from 'dotenv';
@@ -7,57 +12,70 @@ config.config();
 
 @Injectable()
 export class EmailService {
-    private transporte;
+  private transporte;
 
-    constructor(
-        @Inject(forwardRef(() => UsuarioService))
-        private usuarioService: UsuarioService
-    ) {
-        this.transporte = nodemailer.createTransport({
-            host: process.env.EMAIL_SMTP,
-            port: process.env.EMAIL_PORTA,
-            secure: true,
-            auth: {
-                user: process.env.EMAIL_EMAIL,
-                pass: process.env.EMAIL_SENHA
-            }
-        });
+  constructor(
+    @Inject(forwardRef(() => UsuarioService))
+    private usuarioService: UsuarioService,
+  ) {
+    this.transporte = nodemailer.createTransport({
+      host: process.env.EMAIL_SMTP,
+      port: process.env.EMAIL_PORTA,
+      secure: true,
+      auth: {
+        user: process.env.EMAIL_EMAIL,
+        pass: process.env.EMAIL_SENHA,
+      },
+    });
+  }
+
+  async enviarEmail(
+    para: string,
+    assunto: string,
+    conteudoOriginal: string,
+    incluirLinkCancelamento: boolean = true,
+    forcarEnvio: boolean = false,
+  ) {
+    const usuario = await this.usuarioService.procurarUsuarioPorEmail(para);
+    if (usuario && !usuario.aceitaEmails && !forcarEnvio) {
+      console.log(
+        `Usuário ${usuario.email} optou por não receber emails, pulando envio de email`,
+      );
+      return 'Usuário optou por não receber emails';
     }
-
-    async enviarEmail(para: string, assunto: string, conteudoOriginal: string, incluirLinkCancelamento: boolean = true, forcarEnvio: boolean = false) {
-        const usuario = await this.usuarioService.procurarUsuarioPorEmail(para);
-        if (usuario && !usuario.aceitaEmails && !forcarEnvio) {
-            console.log(`Usuário ${usuario.email} optou por não receber emails, pulando envio de email`);
-            return 'Usuário optou por não receber emails';
-        }
-        let conteudo = conteudoOriginal;
-        if (incluirLinkCancelamento) {
-            const linkCancelamento = `${process.env.LINK_CANCELAR_INSCRICAO}${usuario.hashEmail}`;
-            const rodapeEmail = `
+    let conteudo = conteudoOriginal;
+    if (incluirLinkCancelamento) {
+      const linkCancelamento = `${process.env.LINK_CANCELAR_INSCRICAO}${usuario.hashEmail}`;
+      const rodapeEmail = `
             <div style="margin-top: 20px; padding: 10px; background-color: #f8f9fa; border-radius: 4px; text-align: center;">
                 <p style="margin: 0; font-size: 12px;">Deseja parar de receber nossos e-mails?</p>
                 <a href="${linkCancelamento}" style="font-size: 12px; color: #007bff; text-decoration: none;">Clique aqui para cancelar a inscrição</a>
             </div>
         `;
-            conteudo = `${conteudoOriginal}${rodapeEmail}`;
-        }
-        const opcoesDeEmail = {
-            from: (process.env.EMAIL_EMAIL),
-            to: para,
-            subject: assunto,
-            html: conteudo
-        };
-        try {
-            const resultado = await this.transporte.sendMail(opcoesDeEmail);
-        } catch (error) {
-            throw new InternalServerErrorException(`Falha ao enviar o e-mail. Erro: ${error.message}`);
-        }
+      conteudo = `${conteudoOriginal}${rodapeEmail}`;
     }
+    const opcoesDeEmail = {
+      from: process.env.EMAIL_EMAIL,
+      to: para,
+      subject: assunto,
+      html: conteudo,
+    };
+    try {
+      const resultado = await this.transporte.sendMail(opcoesDeEmail);
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `Falha ao enviar o e-mail. Erro: ${error.message}`,
+      );
+    }
+  }
 
-    async enviarEmailparaReativar(email: string, novoHashEmail: string): Promise<void> {
-        const linkReativacao = process.env.LINK_REATIVAR_EMAIL + novoHashEmail;
-        const assunto = '[REXLAB] 💌Reative o Recebimento de E-mails';
-        const conteudo = `
+  async enviarEmailparaReativar(
+    email: string,
+    novoHashEmail: string,
+  ): Promise<void> {
+    const linkReativacao = process.env.LINK_REATIVAR_EMAIL + novoHashEmail;
+    const assunto = '[REXLAB] 💌Reative o Recebimento de E-mails';
+    const conteudo = `
         <div style="background-color: #f8f9fa; padding: 20px; font-family: Arial, sans-serif;">
             <div style="max-width: 600px; margin: auto; text-align:center; background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.15);">
                 <h2 style="color: #007bff;">Reative o Recebimento de E-mails 💌</h2>
@@ -69,18 +87,22 @@ export class EmailService {
             </div>
         </div>
     `;
-        await this.enviarEmail(email, assunto, conteudo, false, true);
-        const atualizacoes = {
-            novoHashEmail: novoHashEmail
-        };
-        await this.usuarioService.buscarEAtualizarUsuario(email, atualizacoes);
-    }
+    await this.enviarEmail(email, assunto, conteudo, false, true);
+    const atualizacoes = {
+      novoHashEmail: novoHashEmail,
+    };
+    await this.usuarioService.buscarEAtualizarUsuario(email, atualizacoes);
+  }
 
-    async enviarEmailRecuperacaoSenha(email: string, tokenRecuperacaoSenha: string): Promise<void> {
-        const linkRedefinicao = process.env.LINK_REDEFINIR_SENHA + tokenRecuperacaoSenha;
+  async enviarEmailRecuperacaoSenha(
+    email: string,
+    tokenRecuperacaoSenha: string,
+  ): Promise<void> {
+    const linkRedefinicao =
+      process.env.LINK_REDEFINIR_SENHA + tokenRecuperacaoSenha;
 
-        const assunto = '[REXLAB] 🔒Recuperação de Senha';
-        const conteudo = `
+    const assunto = '[REXLAB] 🔒Recuperação de Senha';
+    const conteudo = `
         <div style="background-color: #f8f9fa; padding: 20px; font-family: Arial, sans-serif;">
             <div style="max-width: 600px; margin: auto; text-align:center; background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.15);">
                 <h2 style="color: #007bff;">Recuperação de Senha</h2>
@@ -92,12 +114,12 @@ export class EmailService {
             </div>
         </div>
     `;
-        await this.enviarEmail(email, assunto, conteudo, false, true);
-    }
+    await this.enviarEmail(email, assunto, conteudo, false, true);
+  }
 
-    async enviarEmailBoasVindas(email: string, nome: string) {
-        const assunto = '[REXLAB] 🤝Bem-vindo(a) à nossa plataforma!';
-        const conteudo = `
+  async enviarEmailBoasVindas(email: string, nome: string) {
+    const assunto = '[REXLAB] 🤝Bem-vindo(a) à nossa plataforma!';
+    const conteudo = `
     <div style="background-color: #f8f9fa; padding: 20px; font-family: Arial, sans-serif;">
         <div style="max-width: 600px; margin: auto; text-align:center;background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.15);">
             <h2 style="color: #007bff;">Bem-vindo(a), ${nome}!</h2>
@@ -106,12 +128,12 @@ export class EmailService {
         </div>
     </div>
 `;
-        await this.enviarEmail(email, assunto, conteudo);
-    }
+    await this.enviarEmail(email, assunto, conteudo);
+  }
 
-    async enviarEmailNegacao(email: string) {
-        const assunto = '[REXLAB] 🚫Registro Negado';
-        const conteudo = `
+  async enviarEmailNegacao(email: string) {
+    const assunto = '[REXLAB] 🚫Registro Negado';
+    const conteudo = `
         <div style="background-color: #f8f9fa; padding: 20px; font-family: Arial, sans-serif;">
             <div style="max-width: 600px; margin: auto; text-align:center; background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.15);">
                 <h2 style="color: #dc3545;">Registro Negado</h2>
@@ -121,6 +143,6 @@ export class EmailService {
             </div>
         </div>
         `;
-        await this.enviarEmail(email, assunto, conteudo);
-    }
+    await this.enviarEmail(email, assunto, conteudo);
+  }
 }

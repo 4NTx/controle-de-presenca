@@ -13,17 +13,17 @@ import { EmailService } from 'src/email/email.service';
 config.config();
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([Usuario]),
-        PassportModule,
-        EmailModule,
-        UsuarioModule,
-        JwtModule.register({
-            secret: process.env.JWT_SECRET,
-            signOptions: { expiresIn: '7d' },
-        }),
-    ],
-    providers: [AuthService, JwtStrategy, EmailService],
-    controllers: [AuthController],
+  imports: [
+    TypeOrmModule.forFeature([Usuario]),
+    PassportModule,
+    EmailModule,
+    UsuarioModule,
+    JwtModule.register({
+      secret: process.env.JWT_SECRET,
+      signOptions: { expiresIn: '7d' },
+    }),
+  ],
+  providers: [AuthService, JwtStrategy, EmailService],
+  controllers: [AuthController],
 })
-export class AuthModule { }
+export class AuthModule {}

@@ -7,19 +7,21 @@ config.config();
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-    constructor(private authService: AuthService) {
-        super({
-            jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-            ignoreExpiration: false,
-            secretOrKey: process.env.JWT_SECRET,
-        });
-    }
+  constructor(private authService: AuthService) {
+    super({
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      ignoreExpiration: false,
+      secretOrKey: process.env.JWT_SECRET,
+    });
+  }
 
-    async validate(payload: any) {
-        const usuario = await this.authService.procurarUsuarioPorEmail(payload.email);
-        if (!usuario) {
-            throw new UnauthorizedException('Acesso não autorizado 🚫');
-        }
-        return usuario;
+  async validate(payload: any) {
+    const usuario = await this.authService.procurarUsuarioPorEmail(
+      payload.email,
+    );
+    if (!usuario) {
+      throw new UnauthorizedException('Acesso não autorizado 🚫');
     }
+    return usuario;
+  }
 }

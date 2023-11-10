@@ -18,9 +18,9 @@ config.config();
       database: process.env.DB_NAME,
       entities: ['dist/**/*.entity{.ts,.js}'],
       synchronize: true, // Alterar em Produção
-      logger: "advanced-console",
+      logger: 'advanced-console',
       timezone: '-03:00',
-      logging: false
+      logging: false,
     }),
     UsuarioModule,
     RegistroModule,
@@ -30,4 +30,4 @@ config.config();
   controllers: [],
   providers: [],
 })
-export class AppModule { }
+export class AppModule {}

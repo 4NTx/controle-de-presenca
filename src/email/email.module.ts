@@ -3,8 +3,8 @@ import { EmailService } from './email.service';
 import { UsuarioModule } from '../usuario/usuarios.module';
 
 @Module({
-    providers: [EmailService],
-    imports: [forwardRef(() => UsuarioModule)],
-    exports: [EmailService],
+  providers: [EmailService],
+  imports: [forwardRef(() => UsuarioModule)],
+  exports: [EmailService],
 })
-export class EmailModule { }
+export class EmailModule {}

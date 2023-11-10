@@ -6,12 +6,9 @@ import { Registro } from './registro.entity';
 import { UsuarioModule } from '../usuario/usuarios.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Registro]),
-    UsuarioModule
-  ],
+  imports: [TypeOrmModule.forFeature([Registro]), UsuarioModule],
   providers: [RegistroService],
   controllers: [RegistroController],
   exports: [RegistroService],
 })
-export class RegistroModule { }
+export class RegistroModule {}
