@@ -14,7 +14,7 @@ import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 export class UsuarioController {
   constructor(private usuarioService: UsuarioService) {}
 
-  @UseGuards(JwtAuthGuard, AdminAuthGuard)
+  //@UseGuards(JwtAuthGuard, AdminAuthGuard)
   @Get('listar-bolsistas')
   async listarBolsistas(): Promise<Usuario[]> {
     return this.usuarioService.listarBolsistas();

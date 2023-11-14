@@ -13,7 +13,7 @@ export class RegistroController {
     return await this.registroService.registrarPresenca(cartaoID);
   }
 
-  @UseGuards(JwtAuthGuard, AdminAuthGuard)
+  //@UseGuards(JwtAuthGuard, AdminAuthGuard)
   @Get('calcular-tempo-total')
   async calcularTempoTotal(
     @Query('usuarioID') usuarioID: number = 0,
@@ -35,7 +35,7 @@ export class RegistroController {
     );
   }
 
-  @UseGuards(JwtAuthGuard, AdminAuthGuard)
+  //@UseGuards(JwtAuthGuard, AdminAuthGuard)
   @Get('buscar-registros')
   async buscarRegistros(
     @Query('pagina') pagina: number = 1,

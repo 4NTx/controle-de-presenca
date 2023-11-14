@@ -51,7 +51,7 @@ export class RegistroService {
       await this.registroRepository.save(novoRegistro);
       respostaMensagem = 'Entrada registrada com sucesso!';
     } else if (ultimoRegistro.dataHoraSaida) {
-      const umaHora = 60 * 60 * 1000;
+      const umaHora = 15000;
       const diferenca =
         agora.getTime() - new Date(ultimoRegistro.dataHoraSaida).getTime();
 
@@ -64,7 +64,7 @@ export class RegistroService {
         respostaMensagem = 'Entrada registrada com sucesso!';
       } else {
         respostaMensagem =
-          'Aguarde 1 hora após a última saída para registrar uma nova entrada.';
+          'Aguarde 15s após a última saída para registrar uma nova entrada.';
       }
     } else {
       ultimoRegistro.dataHoraSaida = agora;
