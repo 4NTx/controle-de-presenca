@@ -8,8 +8,8 @@ import { JwtStrategy } from '../jwt/jwt.strategy';
 import { PassportModule } from '@nestjs/passport';
 import { EmailModule } from '../email/email.module';
 import * as config from 'dotenv';
-import { UsuarioModule } from 'src/usuario/usuarios.module';
-import { EmailService } from 'src/email/email.service';
+import { UsuarioModule } from '../usuario/usuarios.module';
+import { EmailService } from '../email/email.service';
 config.config();
 
 @Module({

@@ -13,8 +13,8 @@ import {
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { JwtService } from '@nestjs/jwt';
-import { AdminAuthGuard } from 'src/guards/admin-auth.guard';
-import { EmailService } from 'src/email/email.service';
+import { AdminAuthGuard } from '../guards/admin-auth.guard';
+import { EmailService } from '../email/email.service';
 
 @Controller('autenticacao')
 export class AuthController {

@@ -5,7 +5,7 @@ import {
   Inject,
 } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
-import { UsuarioService } from 'src/usuario/usuario.service';
+import { UsuarioService } from '../usuario/usuario.service';
 import * as config from 'dotenv';
 
 config.config();

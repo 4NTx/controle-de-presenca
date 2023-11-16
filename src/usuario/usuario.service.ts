@@ -7,7 +7,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Usuario } from './usuario.entity';
 import { Repository } from 'typeorm';
-import { EmailService } from 'src/email/email.service';
+import { EmailService } from '../email/email.service';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
@@ -15,9 +15,9 @@ export class UsuarioService {
   constructor(
     @InjectRepository(Usuario)
     private usuarioRepository: Repository<Usuario>,
-    @Inject(forwardRef(() => EmailService))
-    private emailService: EmailService,
-  ) {}
+      @Inject(forwardRef(() => EmailService))
+      private emailService: EmailService,
+    ) {}
 
   async listarBolsistas(): Promise<Usuario[]> {
     return await this.usuarioRepository.find();

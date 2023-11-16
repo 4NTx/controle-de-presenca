@@ -7,8 +7,8 @@ import {
 } from '@nestjs/common';
 import { UsuarioService } from './usuario.service';
 import { Usuario } from './usuario.entity';
-import { AdminAuthGuard } from 'src/guards/admin-auth.guard';
-import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
+import { AdminAuthGuard } from '../guards/admin-auth.guard';
+import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 
 @Controller('usuario')
 export class UsuarioController {
