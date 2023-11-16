@@ -24,14 +24,14 @@ export class RegistroService {
       where: { cartaoID },
     });
     if (!usuario) {
-      throw new NotFoundException ('Usuário não encontrado neste Cartão RFID.');
+      throw new NotFoundException('Usuário não encontrado neste Cartão RFID.');
     }
-
+  
     const ultimoRegistro = await this.registroRepository.findOne({
       where: { usuario: usuario },
       order: { dataHoraEntrada: 'DESC' },
     });
-
+  
     const agora = new Date();
     const hoje = new Date(
       agora.getFullYear(),
@@ -42,37 +42,39 @@ export class RegistroService {
       ? new Date(ultimoRegistro.dataHoraEntrada)
       : null;
     let respostaMensagem = '';
-
+  
     if (!ultimoRegistro || dataUltimoRegistro < hoje) {
       const novoRegistro = this.registroRepository.create({
         usuario: usuario,
         dataHoraEntrada: agora,
       });
       await this.registroRepository.save(novoRegistro);
-      respostaMensagem = 'Entrada registrada com sucesso!';
-    } else if (ultimoRegistro.dataHoraSaida) {
-      const umaHora = 15000;
-      const diferenca =
-        agora.getTime() - new Date(ultimoRegistro.dataHoraSaida).getTime();
-
-      if (diferenca >= umaHora) {
-        const novoRegistro = this.registroRepository.create({
-          usuario: usuario,
-          dataHoraEntrada: agora,
-        });
-        await this.registroRepository.save(novoRegistro);
-        respostaMensagem = 'Entrada registrada com sucesso!';
-      } else {
-        respostaMensagem =
-          'Aguarde 15s após a última saída para registrar uma nova entrada.';
-      }
+      respostaMensagem = `Entrada registrada com sucesso para ${usuario.nome}!`;
     } else {
-      ultimoRegistro.dataHoraSaida = agora;
-      await this.registroRepository.save(ultimoRegistro);
-      respostaMensagem = 'Saída registrada com sucesso!';
+      const intervaloMinimo = 15000;
+      const tempoDesdeUltimaAcao = ultimoRegistro.dataHoraSaida 
+          ? agora.getTime() - new Date(ultimoRegistro.dataHoraSaida).getTime()
+          : agora.getTime() - new Date(ultimoRegistro.dataHoraEntrada).getTime();
+  
+      if (tempoDesdeUltimaAcao >= intervaloMinimo) {
+        if (ultimoRegistro.dataHoraSaida) {
+          const novoRegistro = this.registroRepository.create({
+            usuario: usuario,
+            dataHoraEntrada: agora,
+          });
+          await this.registroRepository.save(novoRegistro);
+          respostaMensagem = `Entrada registrada com sucesso para ${usuario.nome}!`;
+        } else {
+          ultimoRegistro.dataHoraSaida = agora;
+          await this.registroRepository.save(ultimoRegistro);
+          respostaMensagem = `Saída registrada com sucesso para ${usuario.nome}!`;
+        }
+      } else {
+        throw new BadRequestException(`${usuario.nome}, Aguarde 15s após a última ação para registrar uma nova entrada ou saída.`);
+      }
     }
     return respostaMensagem;
-  }
+  }  
 
   async calcularTempoTotal(
     usuarioID: number,
