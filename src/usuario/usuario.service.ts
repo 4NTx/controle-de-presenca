@@ -28,7 +28,7 @@ export class UsuarioService {
       where: { hashEmail },
     });
     if (!usuario) {
-      return 'Usuário não encontrado';
+      throw new NotFoundException ('Usuário não encontrado');
     }
     usuario.aceitaEmails = false;
     usuario.novoHashEmail = uuidv4();
@@ -46,7 +46,7 @@ export class UsuarioService {
       where: { novoHashEmail },
     });
     if (!usuario) {
-      return 'Usuário não encontrado';
+      throw new NotFoundException ('Usuário não encontrado');
     }
     usuario.aceitaEmails = true;
     usuario.hashEmail = uuidv4();

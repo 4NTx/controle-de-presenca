@@ -24,7 +24,7 @@ export class RegistroService {
       where: { cartaoID },
     });
     if (!usuario) {
-      return 'Usuário não encontrado neste Cartão RFID.';
+      throw new NotFoundException ('Usuário não encontrado neste Cartão RFID.');
     }
 
     const ultimoRegistro = await this.registroRepository.findOne({
