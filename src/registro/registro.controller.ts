@@ -6,7 +6,7 @@ import { Registro } from './registro.entity';
 
 @Controller('registro')
 export class RegistroController {
-  constructor(private readonly registroService: RegistroService) {}
+  constructor(private readonly registroService: RegistroService) { }
 
   @Post('presenca')
   async registrarPresenca(@Body('cartaoID') cartaoID: string): Promise<string> {

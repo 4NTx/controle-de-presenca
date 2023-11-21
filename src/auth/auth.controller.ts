@@ -1,16 +1,4 @@
-import {
-  Controller,
-  Patch,
-  UseGuards,
-  Post,
-  Get,
-  NotFoundException,
-  Body,
-  Query,
-  UnauthorizedException,
-  BadRequestException,
-  ConflictException,
-} from '@nestjs/common';
+import { Controller, Patch, UseGuards, Post, Get, NotFoundException, Body, Query, UnauthorizedException, BadRequestException, ConflictException, } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { JwtService } from '@nestjs/jwt';
 import { AdminAuthGuard } from '../guards/admin-auth.guard';
@@ -22,7 +10,7 @@ export class AuthController {
     private authService: AuthService,
     private jwtService: JwtService,
     private emailService: EmailService,
-  ) {}
+  ) { }
 
   @Post('registro')
   async registrar(

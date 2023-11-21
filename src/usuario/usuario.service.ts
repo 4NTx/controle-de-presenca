@@ -15,9 +15,9 @@ export class UsuarioService {
   constructor(
     @InjectRepository(Usuario)
     private usuarioRepository: Repository<Usuario>,
-      @Inject(forwardRef(() => EmailService))
-      private emailService: EmailService,
-    ) {}
+    @Inject(forwardRef(() => EmailService))
+    private emailService: EmailService,
+  ) { }
 
   async listarBolsistas(): Promise<Usuario[]> {
     return await this.usuarioRepository.find();
@@ -28,7 +28,7 @@ export class UsuarioService {
       where: { hashEmail },
     });
     if (!usuario) {
-      throw new NotFoundException ('Usuário não encontrado');
+      throw new NotFoundException('Usuário não encontrado');
     }
     usuario.aceitaEmails = false;
     usuario.novoHashEmail = uuidv4();
@@ -46,7 +46,7 @@ export class UsuarioService {
       where: { novoHashEmail },
     });
     if (!usuario) {
-      throw new NotFoundException ('Usuário não encontrado');
+      throw new NotFoundException('Usuário não encontrado');
     }
     usuario.aceitaEmails = true;
     usuario.hashEmail = uuidv4();

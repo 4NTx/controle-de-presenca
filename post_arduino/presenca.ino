@@ -8,13 +8,13 @@
 
 WiFiClient wifiClient;
 MFRC522 mfrc522(SS_PIN, RST_PIN);
-const char* ssid = "negocio";
-const char* password = "negocio123";
+const char* rede = "negocio";
+const char* senha = "negocio123";
 
 void setup() {
   pinMode(5, OUTPUT);
   Serial.begin(115200);
-  WiFi.begin(ssid, password);
+  WiFi.begin(rede, senha);
   SPI.begin();
   mfrc522.PCD_Init();
 

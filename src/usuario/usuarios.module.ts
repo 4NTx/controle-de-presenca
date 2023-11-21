@@ -14,4 +14,4 @@ import { EmailModule } from '../email/email.module';
   controllers: [UsuarioController],
   exports: [UsuarioService, TypeOrmModule],
 })
-export class UsuarioModule {}
+export class UsuarioModule { }

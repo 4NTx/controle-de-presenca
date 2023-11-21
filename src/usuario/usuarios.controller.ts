@@ -12,7 +12,7 @@ import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 
 @Controller('usuario')
 export class UsuarioController {
-  constructor(private usuarioService: UsuarioService) {}
+  constructor(private usuarioService: UsuarioService) { }
 
   //@UseGuards(JwtAuthGuard, AdminAuthGuard)
   @Get('listar-bolsistas')
