@@ -58,7 +58,6 @@ export class RegistroService {
       where: { usuario: { usuarioID: usuario.usuarioID } },
       order: { dataHoraEntrada: "DESC" },
     });
-
     const agora = new Date();
     const hoje = new Date(
       agora.getFullYear(),
@@ -68,10 +67,34 @@ export class RegistroService {
     const dataUltimoRegistro = ultimoRegistro
       ? new Date(ultimoRegistro.dataHoraEntrada)
       : null;
+    const dataUltimoRegistroSemHora = dataUltimoRegistro
+      ? new Date(
+          dataUltimoRegistro.getFullYear(),
+          dataUltimoRegistro.getMonth(),
+          dataUltimoRegistro.getDate()
+        )
+      : null;
 
     let respostaMensagem = "";
 
-    if (!ultimoRegistro || dataUltimoRegistro < hoje) {
+    if (
+      ultimoRegistro &&
+      !ultimoRegistro.dataHoraSaida &&
+      dataUltimoRegistroSemHora < hoje
+    ) {
+      ultimoRegistro.dataHoraSaida = new Date(
+        dataUltimoRegistro.getTime() + 4 * 60 * 60 * 1000
+      ); // caso esqueça de registrar saida (datahoraentrada + 4 horas = datahorasaida)
+      await this.registroRepository.save(ultimoRegistro);
+      respostaMensagem = `Saída do dia anterior registrada automaticamente para ${usuario.nome}.`;
+
+      const novoRegistro = this.registroRepository.create({
+        usuario: usuario,
+        dataHoraEntrada: agora,
+      });
+      await this.registroRepository.save(novoRegistro);
+      respostaMensagem += ` Nova entrada registrada com sucesso para ${usuario.nome}!`;
+    } else if (!ultimoRegistro || dataUltimoRegistro < hoje) {
       const novoRegistro = this.registroRepository.create({
         usuario: usuario,
         dataHoraEntrada: agora,
@@ -241,7 +264,6 @@ export class RegistroService {
       const diferenca = (saida.getTime() - entrada.getTime()) / (1000 * 60);
       totalMinutos += diferenca;
     });
-
     return totalMinutos;
   }
 }
