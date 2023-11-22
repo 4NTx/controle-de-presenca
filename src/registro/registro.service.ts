@@ -54,78 +54,67 @@ export class RegistroService {
   }
 
   private async processarEntradaSaida(usuario: Usuario): Promise<string> {
-    const ultimoRegistro = await this.registroRepository.findOne({
-      where: { usuario: { usuarioID: usuario.usuarioID } },
+    const ultimoRegistroEntrada = await this.registroRepository.findOne({
+      where: {
+        usuario: { usuarioID: usuario.usuarioID },
+        dataHoraSaida: IsNull(),
+      },
       order: { dataHoraEntrada: "DESC" },
     });
+
     const agora = new Date();
     const hoje = new Date(
       agora.getFullYear(),
       agora.getMonth(),
       agora.getDate()
     );
-    const dataUltimoRegistro = ultimoRegistro
-      ? new Date(ultimoRegistro.dataHoraEntrada)
-      : null;
-    const dataUltimoRegistroSemHora = dataUltimoRegistro
-      ? new Date(
-          dataUltimoRegistro.getFullYear(),
-          dataUltimoRegistro.getMonth(),
-          dataUltimoRegistro.getDate()
-        )
-      : null;
 
     let respostaMensagem = "";
 
-    if (
-      ultimoRegistro &&
-      !ultimoRegistro.dataHoraSaida &&
-      dataUltimoRegistroSemHora < hoje
-    ) {
-      ultimoRegistro.dataHoraSaida = new Date(
-        dataUltimoRegistro.getTime() + 4 * 60 * 60 * 1000
-      ); // caso esqueça de registrar saida (datahoraentrada + 4 horas = datahorasaida)
-      await this.registroRepository.save(ultimoRegistro);
-      respostaMensagem = `Saída do dia anterior registrada automaticamente para ${usuario.nome}.`;
+    if (ultimoRegistroEntrada) {
+      const dataUltimoRegistroSemHora = new Date(
+        ultimoRegistroEntrada.dataHoraEntrada.getFullYear(),
+        ultimoRegistroEntrada.dataHoraEntrada.getMonth(),
+        ultimoRegistroEntrada.dataHoraEntrada.getDate()
+      );
 
-      const novoRegistro = this.registroRepository.create({
-        usuario: usuario,
-        dataHoraEntrada: agora,
-      });
-      await this.registroRepository.save(novoRegistro);
-      respostaMensagem += ` Nova entrada registrada com sucesso para ${usuario.nome}!`;
-    } else if (!ultimoRegistro || dataUltimoRegistro < hoje) {
+      const intervaloMinimo = 15000; // 15 segundos
+
+      const tempoDesdeUltimaEntrada =
+        agora.getTime() -
+        new Date(ultimoRegistroEntrada.dataHoraEntrada).getTime();
+
+      if (dataUltimoRegistroSemHora < hoje) {
+        ultimoRegistroEntrada.dataHoraSaida = new Date(
+          ultimoRegistroEntrada.dataHoraEntrada.getTime() + 4 * 60 * 60 * 1000
+        );
+        await this.registroRepository.save(ultimoRegistroEntrada);
+        respostaMensagem = `Saída do dia anterior registrada automaticamente para ${usuario.nome}.`;
+
+        const novoRegistro = this.registroRepository.create({
+          usuario: usuario,
+          dataHoraEntrada: agora,
+        });
+        await this.registroRepository.save(novoRegistro);
+        respostaMensagem += ` Nova entrada registrada com sucesso para ${usuario.nome}!`;
+      } else if (tempoDesdeUltimaEntrada >= intervaloMinimo) {
+        ultimoRegistroEntrada.dataHoraSaida = agora;
+        await this.registroRepository.save(ultimoRegistroEntrada);
+        respostaMensagem = `Saída registrada com sucesso para ${usuario.nome}!`;
+      } else {
+        throw new BadRequestException(
+          `${usuario.nome}, aguarde ao menos 15 segundos para registrar uma saída após a entrada.`
+        );
+      }
+    } else {
       const novoRegistro = this.registroRepository.create({
         usuario: usuario,
         dataHoraEntrada: agora,
       });
       await this.registroRepository.save(novoRegistro);
       respostaMensagem = `Entrada registrada com sucesso para ${usuario.nome}!`;
-    } else {
-      const intervaloMinimo = 15000;
-      const tempoDesdeUltimaAcao = ultimoRegistro.dataHoraSaida
-        ? agora.getTime() - new Date(ultimoRegistro.dataHoraSaida).getTime()
-        : agora.getTime() - new Date(ultimoRegistro.dataHoraEntrada).getTime();
-
-      if (tempoDesdeUltimaAcao >= intervaloMinimo) {
-        if (ultimoRegistro.dataHoraSaida) {
-          const novoRegistro = this.registroRepository.create({
-            usuario: usuario,
-            dataHoraEntrada: agora,
-          });
-          await this.registroRepository.save(novoRegistro);
-          respostaMensagem = `Entrada registrada com sucesso para ${usuario.nome}!`;
-        } else {
-          ultimoRegistro.dataHoraSaida = agora;
-          await this.registroRepository.save(ultimoRegistro);
-          respostaMensagem = `Saída registrada com sucesso para ${usuario.nome}!`;
-        }
-      } else {
-        throw new BadRequestException(
-          `${usuario.nome}, aguarde 15 segundos após a última ação para registrar uma nova entrada ou saída.`
-        );
-      }
     }
+
     return respostaMensagem;
   }
 
