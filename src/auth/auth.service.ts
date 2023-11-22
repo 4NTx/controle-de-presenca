@@ -66,7 +66,6 @@ export class AuthService {
       where: { email },
     });
 
-    // Somente verifica o cartaoID se for fornecido
     const usuarioCartaoID = cartaoID
       ? await this.usuarioRepository.findOne({
           where: { cartaoID },
