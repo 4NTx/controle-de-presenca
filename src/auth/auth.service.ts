@@ -3,20 +3,20 @@ import {
   ConflictException,
   NotFoundException,
   BadRequestException,
-} from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { v4 as uuidv4 } from 'uuid';
-import { Usuario } from '../usuario/usuario.entity';
-import * as bcrypt from 'bcryptjs';
-import { EmailService } from 'src/email/email.service';
+} from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { v4 as uuidv4 } from "uuid";
+import { Usuario } from "../usuario/usuario.entity";
+import * as bcrypt from "bcryptjs";
+import { EmailService } from "src/email/email.service";
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(Usuario)
     private usuarioRepository: Repository<Usuario>,
-    private emailService: EmailService,
+    private emailService: EmailService
   ) {}
 
   async registrarUsuario(dadosUsuario: {
@@ -35,9 +35,9 @@ export class AuthService {
       whats: dadosUsuario.whats,
       senha: hashedSenha,
       cartaoID: dadosUsuario.cartaoID,
-      cargo: 'user',
+      cargo: "user",
       hashEmail: hashEmail,
-      statusRegistro: 'pendente',
+      statusRegistro: "pendente",
       novoHashEmail: novoHashEmail,
     });
     await this.usuarioRepository.save(novoUsuario);
@@ -60,33 +60,38 @@ export class AuthService {
   async verificarEmailOuNomeOuCartaoExistente(
     email: string,
     cartaoID: string,
-    nome: string,
+    nome: string
   ) {
     const usuarioEmail = await this.usuarioRepository.findOne({
       where: { email },
     });
-    const usuarioCartaoID = await this.usuarioRepository.findOne({
-      where: { cartaoID },
-    });
+
+    // Somente verifica o cartaoID se for fornecido
+    const usuarioCartaoID = cartaoID
+      ? await this.usuarioRepository.findOne({
+          where: { cartaoID },
+        })
+      : null;
+
     const nomeUsuario = await this.usuarioRepository.findOne({
       where: { nome },
     });
 
     if (usuarioEmail) {
       throw new ConflictException(
-        'Já existe um usuário registrado com esse e-mail.',
+        "Já existe um usuário registrado com esse e-mail."
       );
     }
 
     if (usuarioCartaoID) {
       throw new ConflictException(
-        'Já existe um usuário registrado com esse ID de cartão.',
+        "Já existe um usuário registrado com esse ID de cartão."
       );
     }
 
     if (nomeUsuario) {
       throw new ConflictException(
-        'Já existe um usuário registrado com esse nome.',
+        "Já existe um usuário registrado com esse nome."
       );
     }
   }
@@ -94,7 +99,7 @@ export class AuthService {
   async gerarTokenRecuperacaoSenha(email: string): Promise<void> {
     const usuario = await this.procurarUsuarioPorEmail(email);
     if (!usuario) {
-      throw new ConflictException('Não existe uma conta com esse e-mail.');
+      throw new ConflictException("Não existe uma conta com esse e-mail.");
     }
     const token = uuidv4();
     usuario.tokenRecuperacaoSenha = token;
@@ -107,7 +112,7 @@ export class AuthService {
 
   async validarTokenRecuperacaoSenha(
     email: string,
-    token: string,
+    token: string
   ): Promise<boolean> {
     const usuario = await this.usuarioRepository.findOne({
       where: { tokenRecuperacaoSenha: token },
@@ -117,11 +122,11 @@ export class AuthService {
       !usuario.dataExpiracaoTokenRecuperacao ||
       new Date() > usuario.dataExpiracaoTokenRecuperacao
     ) {
-      throw new NotFoundException('Token de recuperação inválido ou expirado.');
+      throw new NotFoundException("Token de recuperação inválido ou expirado.");
     }
     if (usuario.email !== email) {
       throw new BadRequestException(
-        'O E-mail não corresponde ao que solicitou a recuperação.',
+        "O E-mail não corresponde ao que solicitou a recuperação."
       );
     }
     return true;
@@ -130,7 +135,7 @@ export class AuthService {
   async redefinirSenha(
     email: string,
     novaSenha: string,
-    token: string,
+    token: string
   ): Promise<void> {
     await this.validarTokenRecuperacaoSenha(email, token);
     const usuario = await this.procurarUsuarioPorEmail(email);
@@ -149,24 +154,24 @@ export class AuthService {
       !usuario.dataExpiracaoTokenRecuperacao ||
       new Date() > usuario.dataExpiracaoTokenRecuperacao
     ) {
-      throw new NotFoundException('Token de recuperação inválido ou expirado.');
+      throw new NotFoundException("Token de recuperação inválido ou expirado.");
     }
     return usuario.email;
   }
 
   async listarUsuariosPendentes(): Promise<Usuario[]> {
     return this.usuarioRepository.find({
-      where: { statusRegistro: 'pendente' },
+      where: { statusRegistro: "pendente" },
     });
   }
 
   async aprovarRegistro(usuarioID: number): Promise<void> {
-    await this.usuarioRepository.update(usuarioID, { statusRegistro: 'ativo' });
+    await this.usuarioRepository.update(usuarioID, { statusRegistro: "ativo" });
   }
 
   async negarRegistro(usuarioID: number): Promise<void> {
     await this.usuarioRepository.update(usuarioID, {
-      statusRegistro: 'negado',
+      statusRegistro: "negado",
     });
   }
 }

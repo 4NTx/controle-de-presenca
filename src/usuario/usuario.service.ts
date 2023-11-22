@@ -3,12 +3,12 @@ import {
   NotFoundException,
   forwardRef,
   Inject,
-} from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Usuario } from './usuario.entity';
-import { Repository } from 'typeorm';
-import { EmailService } from '../email/email.service';
-import { v4 as uuidv4 } from 'uuid';
+} from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Usuario } from "./usuario.entity";
+import { Repository } from "typeorm";
+import { EmailService } from "../email/email.service";
+import { v4 as uuidv4 } from "uuid";
 
 @Injectable()
 export class UsuarioService {
@@ -16,8 +16,8 @@ export class UsuarioService {
     @InjectRepository(Usuario)
     private usuarioRepository: Repository<Usuario>,
     @Inject(forwardRef(() => EmailService))
-    private emailService: EmailService,
-  ) { }
+    private emailService: EmailService
+  ) {}
 
   async listarBolsistas(): Promise<Usuario[]> {
     return await this.usuarioRepository.find();
@@ -28,7 +28,7 @@ export class UsuarioService {
       where: { hashEmail },
     });
     if (!usuario) {
-      throw new NotFoundException('Usuário não encontrado');
+      throw new NotFoundException("Usuário não encontrado");
     }
     usuario.aceitaEmails = false;
     usuario.novoHashEmail = uuidv4();
@@ -36,9 +36,9 @@ export class UsuarioService {
     await this.usuarioRepository.save(usuario);
     await this.emailService.enviarEmailparaReativar(
       usuario.email,
-      usuario.novoHashEmail,
+      usuario.novoHashEmail
     );
-    return 'Recebimento de emails cancelado com sucesso';
+    return "Recebimento de emails cancelado com sucesso";
   }
 
   async reativarRecebimentoEmail(novoHashEmail: string): Promise<string> {
@@ -46,13 +46,13 @@ export class UsuarioService {
       where: { novoHashEmail },
     });
     if (!usuario) {
-      throw new NotFoundException('Usuário não encontrado');
+      throw new NotFoundException("Usuário não encontrado");
     }
     usuario.aceitaEmails = true;
     usuario.hashEmail = uuidv4();
     usuario.novoHashEmail = null;
     await this.usuarioRepository.save(usuario);
-    return 'Recebimento de emails reativado com sucesso';
+    return "Recebimento de emails reativado com sucesso";
   }
 
   async buscarUsuarioPorID(usuarioID: number): Promise<Usuario> {
@@ -61,11 +61,11 @@ export class UsuarioService {
 
   async buscarEAtualizarUsuario(
     email: string,
-    atualizacoes: Partial<Usuario>,
+    atualizacoes: Partial<Usuario>
   ): Promise<Usuario> {
     const usuario = await this.usuarioRepository.findOne({ where: { email } });
     if (!usuario) {
-      throw new NotFoundException('Usuário não encontrado');
+      throw new NotFoundException("Usuário não encontrado");
     }
     Object.assign(usuario, atualizacoes);
     await this.usuarioRepository.save(usuario);

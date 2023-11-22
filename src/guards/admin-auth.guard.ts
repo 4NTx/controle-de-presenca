@@ -1,5 +1,9 @@
-import { Injectable, ExecutionContext, UnauthorizedException, } from '@nestjs/common';
-import { JwtAuthGuard } from './jwt-auth.guard';
+import {
+  Injectable,
+  ExecutionContext,
+  UnauthorizedException,
+} from "@nestjs/common";
+import { JwtAuthGuard } from "./jwt-auth.guard";
 
 @Injectable()
 export class AdminAuthGuard extends JwtAuthGuard {
@@ -7,18 +11,18 @@ export class AdminAuthGuard extends JwtAuthGuard {
     const canActivate = await super.canActivate(context);
     if (!canActivate) {
       throw new UnauthorizedException(
-        'Acesso negado: JWT inválido ou ausente.',
+        "Acesso negado: JWT inválido ou ausente."
       );
     }
 
     const request = context.switchToHttp().getRequest();
     const user = request.user;
 
-    if (user && user.cargo === 'admin') {
+    if (user && user.cargo === "admin") {
       return true;
     } else {
       throw new UnauthorizedException(
-        'Acesso negado: apenas administradores podem acessar esta rota.',
+        "Acesso negado: apenas administradores podem acessar esta rota."
       );
     }
   }

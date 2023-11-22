@@ -1,10 +1,11 @@
 {
   "name": "controle-presenca",
-  "version": "0.0.1",
-  "description": "",
+  "version": "1.7.1",
+  "description": "Back-end do sistema de controle de presença do UFSC Campus Araranguá",
   "author": "Artur Rick",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "CC-BY-NC-4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
@@ -54,7 +55,7 @@
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-prettier": "^5.0.0",
     "jest": "^29.5.0",
-    "prettier": "^3.0.0",
+    "prettier": "^3.1.0",
     "source-map-support": "^0.5.21",
     "supertest": "^6.3.3",
     "ts-jest": "^29.1.0",

@@ -1,0 +1,20 @@
+###Configurações de SMTP
+EMAIL_SMTP=smtp.gmail.com
+EMAIL_EMAIL=123@gmail.com
+EMAIL_SENHA=123
+EMAIL_PORTA=465
+
+###Configurações de DB
+DB_USER=4ntz
+DB_PASS=chgeRahQzjA]@tap
+DB_NAME=testeteste
+DB_HOST=localhost
+DB_TYPE=mariadb
+
+###Assinatura do JWT
+JWT_SECRET=123
+
+###LINKS
+LINK_REDEFINIR_SENHA=http://localhost:4200/redefinir-senha?tokenRecuperacaoSenha=
+LINK_CANCELAR_INSCRICAO=http://localhost:3000/cancelar-inscricao/
+LINK_REATIVAR_EMAIL=http://localhost:3000/reativar-inscricao/

@@ -2,13 +2,13 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
-} from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between } from 'typeorm';
-import { Registro } from './registro.entity';
-import { Usuario } from '../usuario/usuario.entity';
-import * as moment from 'moment';
-moment.locale('pt-br');
+} from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository, Between, IsNull } from "typeorm";
+import { Registro } from "./registro.entity";
+import { Usuario } from "../usuario/usuario.entity";
+import * as moment from "moment";
+import { RFIDRevisar } from "./rfid_revisar.entity";
 
 @Injectable()
 export class RegistroService {
@@ -17,32 +17,60 @@ export class RegistroService {
     private registroRepository: Repository<Registro>,
     @InjectRepository(Usuario)
     private usuarioRepository: Repository<Usuario>,
+    @InjectRepository(RFIDRevisar)
+    private RFIDRevisarRepository: Repository<RFIDRevisar>
   ) {}
 
-  async registrarPresenca(cartaoID: string): Promise<string> {
-    const usuario = await this.usuarioRepository.findOne({
-      where: { cartaoID },
+  async registrarPresenca(RFID: string): Promise<string> {
+    let usuario = await this.usuarioRepository.findOne({
+      where: { cartaoID: RFID },
     });
-    if (!usuario) {
-      throw new NotFoundException('Usuário não encontrado neste Cartão RFID.');
+
+    if (usuario) {
+      return this.processarEntradaSaida(usuario);
+    } else {
+      const rfidEmRevisao = await this.RFIDRevisarRepository.findOne({
+        where: { RFID },
+      });
+
+      if (rfidEmRevisao) {
+        return "Este RFID está na lista de revisão manual.";
+      }
+      usuario = await this.usuarioRepository.findOne({
+        where: { cartaoID: IsNull() },
+        order: { dataDeRegistroUsuario: "DESC" },
+      });
+
+      if (usuario) {
+        usuario.cartaoID = RFID;
+        await this.usuarioRepository.save(usuario);
+        return `RFID associado ao usuário ${usuario.nome}.`;
+      } else {
+        const RFIDRevisar = this.RFIDRevisarRepository.create({ RFID });
+        await this.RFIDRevisarRepository.save(RFIDRevisar);
+        return "Não encontramos ninguém para associar o RFID, armazenado para revisão manual.";
+      }
     }
-  
+  }
+
+  private async processarEntradaSaida(usuario: Usuario): Promise<string> {
     const ultimoRegistro = await this.registroRepository.findOne({
-      where: { usuario: usuario },
-      order: { dataHoraEntrada: 'DESC' },
+      where: { usuario: { usuarioID: usuario.usuarioID } },
+      order: { dataHoraEntrada: "DESC" },
     });
-  
+
     const agora = new Date();
     const hoje = new Date(
       agora.getFullYear(),
       agora.getMonth(),
-      agora.getDate(),
+      agora.getDate()
     );
     const dataUltimoRegistro = ultimoRegistro
       ? new Date(ultimoRegistro.dataHoraEntrada)
       : null;
-    let respostaMensagem = '';
-  
+
+    let respostaMensagem = "";
+
     if (!ultimoRegistro || dataUltimoRegistro < hoje) {
       const novoRegistro = this.registroRepository.create({
         usuario: usuario,
@@ -52,10 +80,10 @@ export class RegistroService {
       respostaMensagem = `Entrada registrada com sucesso para ${usuario.nome}!`;
     } else {
       const intervaloMinimo = 15000;
-      const tempoDesdeUltimaAcao = ultimoRegistro.dataHoraSaida 
-          ? agora.getTime() - new Date(ultimoRegistro.dataHoraSaida).getTime()
-          : agora.getTime() - new Date(ultimoRegistro.dataHoraEntrada).getTime();
-  
+      const tempoDesdeUltimaAcao = ultimoRegistro.dataHoraSaida
+        ? agora.getTime() - new Date(ultimoRegistro.dataHoraSaida).getTime()
+        : agora.getTime() - new Date(ultimoRegistro.dataHoraEntrada).getTime();
+
       if (tempoDesdeUltimaAcao >= intervaloMinimo) {
         if (ultimoRegistro.dataHoraSaida) {
           const novoRegistro = this.registroRepository.create({
@@ -70,17 +98,19 @@ export class RegistroService {
           respostaMensagem = `Saída registrada com sucesso para ${usuario.nome}!`;
         }
       } else {
-        throw new BadRequestException(`${usuario.nome}, Aguarde 15s após a última ação para registrar uma nova entrada ou saída.`);
+        throw new BadRequestException(
+          `${usuario.nome}, aguarde 15 segundos após a última ação para registrar uma nova entrada ou saída.`
+        );
       }
     }
     return respostaMensagem;
-  }  
+  }
 
   async calcularTempoTotal(
     usuarioID: number,
     periodo: string,
     dataInicio?: string,
-    dataFim?: string,
+    dataFim?: string
   ): Promise<{
     usuario: string;
     email: string;
@@ -94,19 +124,19 @@ export class RegistroService {
       where: { usuarioID },
     });
     if (!usuario) {
-      throw new NotFoundException('Usuário não encontrado');
+      throw new NotFoundException("Usuário não encontrado");
     }
 
     const periodosValidos: Array<moment.unitOfTime.StartOf> = [
-      'day',
-      'week',
-      'month',
-      'quarter',
-      'year',
+      "day",
+      "week",
+      "month",
+      "quarter",
+      "year",
     ];
     if (!periodosValidos.includes(periodo as moment.unitOfTime.StartOf)) {
       throw new BadRequestException(
-        'Período inválido\n Períodos válidos: day, week, month, quarter, year',
+        `Período inválido\n Períodos válidos: day, week, month, quarter, year`
       );
     }
 
@@ -157,7 +187,7 @@ export class RegistroService {
   async buscarRegistros(
     pagina: number = 1,
     qntPorPag: number = 10,
-    email?: string,
+    email?: string
   ): Promise<{
     registros: Registro[];
     total: number;
@@ -169,14 +199,14 @@ export class RegistroService {
       qntPorPag = this.LIMITE_MAX_DE_PAG;
     }
     const query = this.registroRepository
-      .createQueryBuilder('registro')
-      .leftJoinAndSelect('registro.usuario', 'usuario')
-      .orderBy('registro.dataHoraEntrada', 'DESC')
+      .createQueryBuilder("registro")
+      .leftJoinAndSelect("registro.usuario", "usuario")
+      .orderBy("registro.dataHoraEntrada", "DESC")
       .skip((pagina - 1) * qntPorPag)
       .take(qntPorPag);
 
     if (email) {
-      query.andWhere('usuario.email = :email', { email });
+      query.andWhere("usuario.email = :email", { email });
     }
 
     const [registros, total] = await query.getManyAndCount();
@@ -193,7 +223,7 @@ export class RegistroService {
   async calcularTempoTotalEmMinutos(
     usuarioID: number,
     dataInicio: Date,
-    dataFim: Date,
+    dataFim: Date
   ): Promise<number> {
     const registros = await this.registroRepository.find({
       where: {

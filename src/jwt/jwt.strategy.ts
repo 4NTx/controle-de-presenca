@@ -1,8 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { PassportStrategy } from '@nestjs/passport';
-import { Strategy, ExtractJwt } from 'passport-jwt';
-import { AuthService } from '../auth/auth.service';
-import * as config from 'dotenv';
+import { Injectable, UnauthorizedException } from "@nestjs/common";
+import { PassportStrategy } from "@nestjs/passport";
+import { Strategy, ExtractJwt } from "passport-jwt";
+import { AuthService } from "../auth/auth.service";
+import * as config from "dotenv";
 config.config();
 
 @Injectable()
@@ -17,10 +17,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   async validate(payload: any) {
     const usuario = await this.authService.procurarUsuarioPorEmail(
-      payload.email,
+      payload.email
     );
     if (!usuario) {
-      throw new UnauthorizedException('Acesso não autorizado 🚫');
+      throw new UnauthorizedException("Acesso não autorizado 🚫");
     }
     return usuario;
   }

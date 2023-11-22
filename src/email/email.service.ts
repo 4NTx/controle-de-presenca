@@ -1,7 +1,12 @@
-import { Injectable, InternalServerErrorException, forwardRef, Inject, } from '@nestjs/common';
-import * as nodemailer from 'nodemailer';
-import { UsuarioService } from '../usuario/usuario.service';
-import * as config from 'dotenv';
+import {
+  Injectable,
+  InternalServerErrorException,
+  forwardRef,
+  Inject,
+} from "@nestjs/common";
+import * as nodemailer from "nodemailer";
+import { UsuarioService } from "../usuario/usuario.service";
+import * as config from "dotenv";
 
 config.config();
 
@@ -11,7 +16,7 @@ export class EmailService {
 
   constructor(
     @Inject(forwardRef(() => UsuarioService))
-    private usuarioService: UsuarioService,
+    private usuarioService: UsuarioService
   ) {
     this.transporte = nodemailer.createTransport({
       host: process.env.EMAIL_SMTP,
@@ -29,14 +34,14 @@ export class EmailService {
     assunto: string,
     conteudoOriginal: string,
     incluirLinkCancelamento: boolean = true,
-    forcarEnvio: boolean = false,
+    forcarEnvio: boolean = false
   ) {
     const usuario = await this.usuarioService.procurarUsuarioPorEmail(para);
     if (usuario && !usuario.aceitaEmails && !forcarEnvio) {
       console.log(
-        `Usuário ${usuario.email} optou por não receber emails, pulando envio de email`,
+        `Usuário ${usuario.email} optou por não receber emails, pulando envio de email`
       );
-      return 'Usuário optou por não receber emails';
+      return "Usuário optou por não receber emails";
     }
     let conteudo = conteudoOriginal;
     if (incluirLinkCancelamento) {
@@ -59,17 +64,17 @@ export class EmailService {
       const resultado = await this.transporte.sendMail(opcoesDeEmail);
     } catch (error) {
       throw new InternalServerErrorException(
-        `Falha ao enviar o e-mail. Erro: ${error.message}`,
+        `Falha ao enviar o e-mail. Erro: ${error.message}`
       );
     }
   }
 
   async enviarEmailparaReativar(
     email: string,
-    novoHashEmail: string,
+    novoHashEmail: string
   ): Promise<void> {
     const linkReativacao = process.env.LINK_REATIVAR_EMAIL + novoHashEmail;
-    const assunto = '[REXLAB] 💌Reative o Recebimento de E-mails';
+    const assunto = "[REXLAB] 💌Reative o Recebimento de E-mails";
     const conteudo = `
         <div style="background-color: #f8f9fa; padding: 20px; font-family: Arial, sans-serif;">
             <div style="max-width: 600px; margin: auto; text-align:center; background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.15);">
@@ -91,12 +96,12 @@ export class EmailService {
 
   async enviarEmailRecuperacaoSenha(
     email: string,
-    tokenRecuperacaoSenha: string,
+    tokenRecuperacaoSenha: string
   ): Promise<void> {
     const linkRedefinicao =
       process.env.LINK_REDEFINIR_SENHA + tokenRecuperacaoSenha;
 
-    const assunto = '[REXLAB] 🔒Recuperação de Senha';
+    const assunto = "[REXLAB] 🔒Recuperação de Senha";
     const conteudo = `
         <div style="background-color: #f8f9fa; padding: 20px; font-family: Arial, sans-serif;">
             <div style="max-width: 600px; margin: auto; text-align:center; background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.15);">
@@ -113,7 +118,7 @@ export class EmailService {
   }
 
   async enviarEmailBoasVindas(email: string, nome: string) {
-    const assunto = '[REXLAB] 🤝Bem-vindo(a) à nossa plataforma!';
+    const assunto = "[REXLAB] 🤝Bem-vindo(a) à nossa plataforma!";
     const conteudo = `
     <div style="background-color: #f8f9fa; padding: 20px; font-family: Arial, sans-serif;">
         <div style="max-width: 600px; margin: auto; text-align:center;background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.15);">
@@ -127,7 +132,7 @@ export class EmailService {
   }
 
   async enviarEmailNegacao(email: string) {
-    const assunto = '[REXLAB] 🚫Registro Negado';
+    const assunto = "[REXLAB] 🚫Registro Negado";
     const conteudo = `
         <div style="background-color: #f8f9fa; padding: 20px; font-family: Arial, sans-serif;">
             <div style="max-width: 600px; margin: auto; text-align:center; background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.15);">
