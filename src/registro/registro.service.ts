@@ -86,7 +86,7 @@ export class RegistroService {
 
       if (dataUltimoRegistroSemHora < hoje) {
         ultimoRegistroEntrada.dataHoraSaida = new Date(
-          ultimoRegistroEntrada.dataHoraEntrada.getTime() + 4 * 60 * 60 * 1000
+          ultimoRegistroEntrada.dataHoraEntrada.getTime() + 4 * 60 * 60 * 1000 //Caso o usuario n registrou saida no dia anterior, na proxima entrada (data entrada + 4 horas = datasaida)
         );
         await this.registroRepository.save(ultimoRegistroEntrada);
         respostaMensagem = `Saída do dia anterior registrada automaticamente para ${usuario.nome}.`;
