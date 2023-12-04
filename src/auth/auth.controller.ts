@@ -55,7 +55,7 @@ export class AuthController {
       body.senha
     );
     if (!usuario) {
-      throw new UnauthorizedException("Credenciais inválidas.");
+      throw new UnauthorizedException("Email ou senha incorretos.");
     }
     if (usuario.statusRegistro !== "ativo") {
       throw new UnauthorizedException(
